@@ -28,22 +28,51 @@ def get_secret(secret_name, project_id=None):
         # Créer le client Secret Manager
         client = secretmanager.SecretManagerServiceClient()
         
-        # Si project_id n'est pas fourni, essayer de le récupérer depuis les métadonnées
+        # Si project_id n'est pas fourni, essayer de le récupérer depuis différentes sources
         if not project_id:
+            # 1. Variable d'environnement GOOGLE_CLOUD_PROJECT
             project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+            
+            # 2. Variable d'environnement GCP_PROJECT (alternative)
             if not project_id:
-                # En dernier recours, essayer avec les métadonnées GCP
-                import requests
+                project_id = os.environ.get('GCP_PROJECT')
+            
+            # 3. Essayer avec gcloud config
+            if not project_id:
                 try:
+                    import subprocess
+                    result = subprocess.run(
+                        ['gcloud', 'config', 'get-value', 'project'], 
+                        capture_output=True, 
+                        text=True, 
+                        timeout=5
+                    )
+                    if result.returncode == 0 and result.stdout.strip():
+                        project_id = result.stdout.strip()
+                except:
+                    pass
+            
+            # 4. En dernier recours, essayer avec les métadonnées GCP
+            if not project_id:
+                try:
+                    import requests
                     metadata_server = "http://metadata.google.internal/computeMetadata/v1"
                     metadata_flavor = {'Metadata-Flavor': 'Google'}
-                    project_id = requests.get(
+                    response = requests.get(
                         f"{metadata_server}/project/project-id",
                         headers=metadata_flavor,
                         timeout=5
-                    ).text
+                    )
+                    if response.status_code == 200:
+                        project_id = response.text.strip()
                 except:
-                    raise ValueError("Impossible de déterminer le project_id. Veuillez le spécifier explicitement.")
+                    pass
+            
+            # Si toujours pas de project_id, utiliser un fallback ou lever une erreur
+            if not project_id:
+                # Essayer un nom de projet par défaut basé sur le repository
+                project_id = "metrotechnet-bibliosense"  # Ajustez selon votre projet
+                print(f"⚠️  Utilisation du project_id par défaut: {project_id}")
         
         # Construire le nom de la ressource du secret
         name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
@@ -55,7 +84,8 @@ def get_secret(secret_name, project_id=None):
         return response.payload.data.decode("UTF-8")
         
     except Exception as e:
-        print(f"Erreur lors de la récupération du secret '{secret_name}': {e}")
+        print(f"⚠️  Erreur lors de la récupération du secret '{secret_name}': {e}")
+        print(f"🔄 Fallback vers les variables d'environnement...")
         # Fallback vers les variables d'environnement
         return os.getenv(secret_name.upper().replace('-', '_'))
 
@@ -67,17 +97,22 @@ TAXONOMY_FILE = "dbase/classification_books.json"
 
 # -------------------- GPT Category Classification --------------------
 
+# Configuration du projet GCP (modifiez selon votre projet)
+GCP_PROJECT_ID = os.environ.get('GCP_PROJECT', 'metrotechnet-bibliosense')
+
 # OpenAI API key depuis Google Secret Manager
 try:
-    OPENAI_API_KEY = get_secret('openai-api-key')
+    OPENAI_API_KEY = get_secret('openai-api-key', project_id=GCP_PROJECT_ID)
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY non trouvée dans Secret Manager")
+    print("✅ Clé OpenAI récupérée depuis Secret Manager")
 except Exception as e:
-    print(f"Erreur Secret Manager: {e}")
+    print(f"⚠️  Erreur Secret Manager: {e}")
     # Fallback vers les variables d'environnement pour le développement local
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY n'est pas définie (ni dans Secret Manager ni dans les variables d'environnement)")
+    print("✅ Clé OpenAI récupérée depuis les variables d'environnement (.env)")
 
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
