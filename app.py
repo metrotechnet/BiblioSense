@@ -4,11 +4,60 @@ from openai import OpenAI
 import json
 from waitress import serve
 import os
+from google.cloud import secretmanager
 
 # -------------------- Configuration --------------------
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# -------------------- Google Secret Manager --------------------
+
+def get_secret(secret_name, project_id=None):
+    """
+    Récupère un secret depuis Google Secret Manager
+    
+    Args:
+        secret_name (str): Nom du secret dans Secret Manager
+        project_id (str): ID du projet GCP (optionnel, utilisera le projet par défaut si non spécifié)
+    
+    Returns:
+        str: Valeur du secret
+    """
+    try:
+        # Créer le client Secret Manager
+        client = secretmanager.SecretManagerServiceClient()
+        
+        # Si project_id n'est pas fourni, essayer de le récupérer depuis les métadonnées
+        if not project_id:
+            project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+            if not project_id:
+                # En dernier recours, essayer avec les métadonnées GCP
+                import requests
+                try:
+                    metadata_server = "http://metadata.google.internal/computeMetadata/v1"
+                    metadata_flavor = {'Metadata-Flavor': 'Google'}
+                    project_id = requests.get(
+                        f"{metadata_server}/project/project-id",
+                        headers=metadata_flavor,
+                        timeout=5
+                    ).text
+                except:
+                    raise ValueError("Impossible de déterminer le project_id. Veuillez le spécifier explicitement.")
+        
+        # Construire le nom de la ressource du secret
+        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+        
+        # Récupérer le secret
+        response = client.access_secret_version(request={"name": name})
+        
+        # Décoder et retourner la valeur
+        return response.payload.data.decode("UTF-8")
+        
+    except Exception as e:
+        print(f"Erreur lors de la récupération du secret '{secret_name}': {e}")
+        # Fallback vers les variables d'environnement
+        return os.getenv(secret_name.upper().replace('-', '_'))
 
 # -------------------- File Paths --------------------
 
@@ -18,10 +67,18 @@ TAXONOMY_FILE = "dbase/classification_books.json"
 
 # -------------------- GPT Category Classification --------------------
 
-# OpenAI API key depuis les variables d'environnement
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY n'est pas définie dans les variables d'environnement")
+# OpenAI API key depuis Google Secret Manager
+try:
+    OPENAI_API_KEY = get_secret('openai-api-key')
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY non trouvée dans Secret Manager")
+except Exception as e:
+    print(f"Erreur Secret Manager: {e}")
+    # Fallback vers les variables d'environnement pour le développement local
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY n'est pas définie (ni dans Secret Manager ni dans les variables d'environnement)")
+
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 def get_catagories_with_gpt(text, taxonomy):

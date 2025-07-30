@@ -25,7 +25,6 @@ gcloud run deploy $SERVICE_NAME `
   --platform managed `
   --region $REGION `
   --allow-unauthenticated `
-  --set-env-vars OPENAI_API_KEY=$env:OPENAI_API_KEY `
   --memory 1Gi `
   --cpu 1 `
   --timeout 300 `
@@ -33,6 +32,18 @@ gcloud run deploy $SERVICE_NAME `
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Deployment complete!" -ForegroundColor Green
+    
+    # Donner les permissions pour accéder au Secret Manager
+    Write-Host "Configuration des permissions Secret Manager..." -ForegroundColor Yellow
+    $SERVICE_ACCOUNT = gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(spec.template.spec.serviceAccountName)'
+    if (-not $SERVICE_ACCOUNT) {
+        $SERVICE_ACCOUNT = "$(gcloud config get-value project)-compute@developer.gserviceaccount.com"
+    }
+    
+    gcloud projects add-iam-policy-binding $(gcloud config get-value project) `
+      --member="serviceAccount:$SERVICE_ACCOUNT" `
+      --role="roles/secretmanager.secretAccessor"
+    
     Write-Host "Your service URL:" -ForegroundColor Cyan
     gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)'
 } else {

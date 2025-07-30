@@ -1,4 +1,7 @@
 .env
+env-config.json
+create-secret.sh
+create-secret.ps1
 __pycache__/
 *.pyc
 *.pyo
