@@ -1,0 +1,92 @@
+{ 
+
+    "Genre Littéraire": {
+        "Fiction": [
+            "Science-fiction",
+            "Fantasy",
+            "Thriller / Policier",
+            "Romance",
+            "Historique",
+            "Horreur",
+            "Drame / Littérature générale"
+        ],
+        "Non-fiction": [
+            "Essais (philosophie, politique, société)",
+            "Biographies / Mémoires",
+            "Sciences et technologies",
+            "Arts et culture",
+            "Développement personnel",
+            "Voyage / Exploration"
+        ]
+    },
+    "Thèmes - Concepts Clés": {
+        "Société": [
+            "justice sociale",
+            "écologie",
+            "pouvoir",
+            "guerre",
+            "féminisme"
+        ],
+        "Technologie": [
+            "intelligence artificielle",
+            "exploration spatiale",
+            "cybernétique"
+        ],
+        "Relations humaines": [
+            "amitié",
+            "amour",
+            "trahison",
+            "famille"
+        ],
+        "Épopées et quêtes": [
+            "voyage",
+            "survie",
+            "transformation personnelle"
+        ],
+        "Philosophie / Métaphysique": [
+            "sens de la vie",
+            "religion",
+            "conscience"
+        ]
+    },
+    "Type de Public": {
+        "Format":[
+            "Jeunesse / Young Adult",
+            "Adulte",
+            "Documentaire / pédagogique",
+            "Bandes dessinées / romans graphiques",
+            "Nouvelles / anthologies"
+        ]
+    },
+    "Structure Narrative": {
+        "Point de vue": [
+            "narrateur unique",
+            "polyphonique",
+            "omniscient"
+        ],
+        "Temporalité": [
+            "linéaire",
+            "alternée",
+            "fragmentée"
+        ],
+        "Style": [
+            "classique",
+            "expérimental",
+            "poétique"
+        ]
+    },
+    "Personnages / Relations": {
+        "Type de protagoniste": [
+            "héros solitaire",
+            "groupe",
+            "anti-héros",
+            "narrateur anonyme"
+        ],
+        "Relations dominantes": [
+            "romance",
+            "mentorat",
+            "rivalité",
+            "quête collective"
+        ]
+    }
+}

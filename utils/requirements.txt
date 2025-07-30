@@ -4,6 +4,3 @@ webdriver-manager
 OpenAI
 tiktoken
 waitress
-python-dotenv
-flask
-pandas
