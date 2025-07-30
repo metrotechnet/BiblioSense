@@ -222,7 +222,7 @@ def filter_categories():
 # -------------------- Main Entry Point --------------------
 
 if __name__ == "__main__":
-    # Run the Flask app in debug mode (for development)
-    app.run(debug=True)
-    # For production, use waitress (uncomment below)
-    # serve(app, host='0.0.0.0', port=8000)
+    # Get port from environment variable for Cloud Run compatibility
+    port = int(os.environ.get('PORT', 8080))
+    # Run the Flask app
+    app.run(host='0.0.0.0', port=port, debug=False)

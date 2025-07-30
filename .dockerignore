@@ -1,0 +1,21 @@
+# Docker ignore file for BiblioSense
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+.env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache
+.vscode
+.idea
+*.log
+node_modules
+.DS_Store
+Thumbs.db
