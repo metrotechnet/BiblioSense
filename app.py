@@ -65,7 +65,7 @@ def get_secret(secret_name, project_id=None):
         
         # Décoder et retourner la valeur
         payload = response.payload.data.decode("UTF-8")
-        return json.loads(payload)
+        return json.loads(payload)['OPENAI_API_KEY']
 
     except Exception as e:
         print(f"⚠️  Erreur lors de la récupération du secret '{secret_name}': {e}")
