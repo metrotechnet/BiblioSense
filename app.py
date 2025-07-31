@@ -97,6 +97,7 @@ try:
     OPENAI_API_KEY = get_secret(DEFAULT_SECRET_ID, project_id=PROJECT_ID)
     if OPENAI_API_KEY:
         print("✅ Clé OpenAI récupérée depuis Secret Manager")
+        print(f"🔗 URL: {OPENAI_API_KEY}")
     else:
         raise ValueError("OPENAI_API_KEY non trouvée")
 except Exception as e:
