@@ -2,7 +2,7 @@
 # Définit les variables d'environnement nécessaires
 
 # Configuration du projet Google Cloud
-$PROJECT_ID = "metrotechnet-bibliosense"  # Remplacez par votre vrai ID de projet
+$PROJECT_ID = "bibliosense"  # Nom de projet GCP valide
 
 Write-Host "Configuration de BiblioSense" -ForegroundColor Green
 Write-Host "================================" -ForegroundColor Green
