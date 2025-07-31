@@ -76,6 +76,11 @@ const domService = {
          * Process books in chunks to avoid blocking the interface.
          * @param {object} handle - Reference to domService for method calls.
          */
+        // Ensure the container is visible before scrolling
+        container.style.left = "0";
+        container.scrollTop = 0;
+
+
         let index = 0;
         function processChunk(handle) {
             const chunkSize = 10; // Number of items to process per chunk
@@ -94,16 +99,7 @@ const domService = {
             if (index < books.length) {
                 // Schedule the next chunk
                 setTimeout(() => processChunk(handle), 0);
-            } else {
-                // Ensure the container is visible before scrolling
-                container.style.left = "0";
-
-                // Reset scroll position to top
-                setTimeout(() => {
-                    const listContainer = document.getElementById("list-container");
-                    if (listContainer) listContainer.scrollTop = 0;
-                }, 0);
-            }
+            } 
         }
 
         // Start processing the first chunk

@@ -59,6 +59,8 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
         Tu es un classificateur de requêtes spécialisé dans la recherche de livres. 
         Analyse la requête ci-dessous et renvoie uniquement un objet JSON (aucun texte hors JSON) 
         qui contient les catégories pertinentes de la taxonomie ainsi que les mots-clés extraits.
+        Par la suite, transforme la taxonomie trouvée en une description simple, claire et fluide en français, destinée à un lecteur non spécialiste. 
+        Exprime-toi avec des phrases complètes et évite tout jargon technique.
 
         ### Taxonomie :
         {json.dumps(taxonomy, ensure_ascii=False, indent=2)}
@@ -88,8 +90,12 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
             "categorie": "mot_clé_6",
             "parution": "mot_clé_7",
             "pages": "mot_clé_8"
+        }},
+        "Description": "Texte descriptif en français, clair et fluide."
         }}
-        }}
+        ### Exemple de style attendu pour la description :
+        "Les livres sont ..."
+
         - N'inclus que les champs pertinents pour la requête.
         - Si une information est absente, omets simplement le champ.
         """
@@ -113,50 +119,3 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
         # Raise a runtime error if anything goes wrong
         raise RuntimeError(f"Erreur : {str(e)}")
 
-
-def taxonomy_to_description_with_gpt(categories, openai_client):
-    """
-    Use GPT to convert a taxonomy structure into a plain French description.
-
-    Args:
-        categories (dict): Taxonomy returned by GPT, with categories and keywords.
-        openai_client (OpenAI): Instance du client OpenAI configuré.
-
-    Returns:
-        str: Human-readable French description.
-    """
-    try:
-        # Build prompt for GPT
-        prompt = f"""
-        Tu es un assistant spécialisé en vulgarisation. 
-        Transforme la taxonomie ci-dessous en une description simple, claire et fluide en français, destinée à un lecteur non spécialiste. 
-        Exprime-toi avec des phrases complètes et évite tout jargon technique.
-
-        ### Taxonomie :
-        {json.dumps(categories, ensure_ascii=False, indent=2)}
-
-        ### Exemple de style attendu :
-        "Les livres sont classés dans les catégories suivantes : Fiction, Non-fiction et Philosophie. 
-        Les mots-clés utiles pour la recherche incluent le titre, l'auteur et la langue."
-
-        ### Contraintes :
-        - Fournis uniquement le texte final, sans JSON, balises ou annotations.
-        - Ta réponse doit être concise et agréable à lire.
-        """
-
-        # Call GPT to generate the description
-        response = openai_client.responses.create(
-            model="gpt-3.5-turbo",
-            input=[
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
-
-        # Extract the text response
-        description = response.output_text.strip()
-        return description
-
-    except Exception as e:
-        print(f"Erreur lors de la génération de la description avec GPT : {e}")
-        return "Une erreur est survenue lors de la génération de la description."

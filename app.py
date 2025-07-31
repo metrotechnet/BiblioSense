@@ -5,7 +5,7 @@ import json
 from waitress import serve
 import os
 import time
-from gpt_services import get_catagories_with_gpt, taxonomy_to_description_with_gpt, get_secret
+from gpt_services import get_catagories_with_gpt,  get_secret
 
 # -------------------- Global Data Storage --------------------
 
@@ -132,19 +132,11 @@ def create_app():
             # Get categories and keywords from GPT (sequential calls since second depends on first)
             gpt_start = time.time()
             categories = get_catagories_with_gpt(text, taxonomy_data, openai_client)
-            gpt_categories_time = time.time() - gpt_start
-            print(f"⏱️  GPT categories classification: {gpt_categories_time:.2f}s")
+            total_gpt_time = time.time() - gpt_start
+            print(f"⏱️  GPT categories classification: {total_gpt_time:.2f}s")
             print(f"Categories from GPT: {categories}")
             
-            # Generate description with GPT
-            desc_start = time.time()
-            description = taxonomy_to_description_with_gpt(categories["Taxonomie"], openai_client)
-            gpt_description_time = time.time() - desc_start
-            print(f"⏱️  GPT description generation: {gpt_description_time:.2f}s")
-            print(f"Description from GPT: {description}")
-            
-            total_gpt_time = gpt_categories_time + gpt_description_time
-            
+
             # Book filtering logic
             filter_start = time.time()
             filteredNodes = []
@@ -177,7 +169,7 @@ def create_app():
                 # Check keyword matches with pre-lowercased keywords
                 for keyword_key, keyword_value_lower in categories["Mots-clés"].items():
                     book_field = book.get(keyword_key, "")
-                    if book_field and keyword_value_lower in book_field.lower():
+                    if book_field and keyword_value_lower.lower() in book_field.lower():
                         keyword_score += 1
                 
                 # Calculate total score with keyword priority
@@ -223,7 +215,7 @@ def create_app():
             # Return filtered books and description with performance metrics
             return jsonify({
                 "book_list": filteredNodes, 
-                "description": description
+                "description": categories["Description"]
             })
 
         except json.JSONDecodeError as e:
