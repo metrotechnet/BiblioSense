@@ -1,0 +1,216 @@
+import requests
+import json
+import time
+import random
+
+# =======================
+# CONFIGURATION
+# =======================
+SEARCH_URL = "https://openlibrary.org/search.json"
+WORK_URL = "https://openlibrary.org/works/"
+OUTPUT_FILE = "openlibrary_livres_francais.json"
+TOTAL_BOOKS = 100   # Nombre total de livres à récupérer
+BATCH_SIZE = 50     # Réduit pour éviter les erreurs serveur
+MAX_RETRIES = 3     # Nombre de tentatives max
+DELAY_BETWEEN_REQUESTS = 1  # Délai entre requêtes
+# =======================
+
+def fetch_books(start, limit):
+    """Récupère un lot de livres récents avec gestion d'erreurs robuste"""
+    for attempt in range(MAX_RETRIES):
+        try:
+            # Utiliser une requête spécifique pour les livres en français uniquement
+            params = {
+                "q": "language:fre",  # Uniquement les livres en français
+                "sort": "new",  # Plus stable que "first_publish_year desc"
+                "limit": limit,
+                "offset": start,
+                "fields": "key,title,author_name,first_publish_year,subject,publisher,number_of_pages_median,language,cover_i"
+            }
+            
+            print(f"  Tentative {attempt + 1}/{MAX_RETRIES} pour offset {start}...")
+            
+            # Headers pour éviter le rate limiting
+            headers = {
+                'User-Agent': 'BiblioSense/1.0 ',
+                'Accept': 'application/json'
+            }
+            
+            r = requests.get(SEARCH_URL, params=params, headers=headers, timeout=30)
+            
+            if r.status_code == 200:
+                return r.json()
+            elif r.status_code == 500:
+                print(f"  Erreur 500 - Tentative {attempt + 1}, attente {2 ** attempt}s...")
+                time.sleep(2 ** attempt)  # Backoff exponentiel
+                continue
+            else:
+                r.raise_for_status()
+                
+        except requests.exceptions.RequestException as e:
+            print(f"  Erreur de requête: {e}")
+            if attempt < MAX_RETRIES - 1:
+                wait_time = (2 ** attempt) + random.uniform(0, 1)
+                print(f"  Attente {wait_time:.1f}s avant nouvelle tentative...")
+                time.sleep(wait_time)
+            else:
+                print(f"  Échec après {MAX_RETRIES} tentatives")
+                return {"docs": []}  # Retourner structure vide
+    
+    return {"docs": []}  # Si toutes les tentatives échouent
+
+def save_books_to_file(books, filename):
+    """Sauvegarde les livres dans le fichier JSON"""
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(books, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"❌ Erreur sauvegarde: {e}")
+        return False
+
+def load_existing_books(filename):
+    """Charge les livres existants depuis le fichier si il existe"""
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"📄 Nouveau fichier: {filename}")
+        return []
+    except Exception as e:
+        print(f"⚠️  Erreur lecture fichier existant: {e}")
+        return []
+
+def fetch_book_details(work_key):
+    """Récupère les détails d'un livre avec gestion d'erreurs"""
+    try:
+        url = f"https://openlibrary.org{work_key}.json"
+        headers = {
+            'User-Agent': 'BiblioSense/1.0 (https://github.com/metrotechnet/BiblioSense)'
+        }
+        r = requests.get(url, headers=headers, timeout=15)
+        if r.status_code == 200:
+            return r.json()
+    except requests.exceptions.RequestException as e:
+        print(f"    Erreur détails pour {work_key}: {e}")
+    return {}
+
+def extract_metadata(doc):
+    """Extrait les champs demandés"""
+    title = doc.get("title", "Inconnu")
+    author = ", ".join(doc.get("author_name", [])) if "author_name" in doc else "Inconnu"
+    book_link = f"https://openlibrary.org{doc.get('key', '')}"
+    category = ", ".join(doc.get("subject", [])[:5]) if "subject" in doc else ""
+    editor = ", ".join(doc.get("publisher", [])[:3]) if "publisher" in doc else ""
+    parution = doc.get("first_publish_year", "Inconnu")
+    pages = doc.get("number_of_pages_median", "")
+    langue = ", ".join(doc.get("language", [])) if "language" in doc else ""
+    cover_url = f"https://covers.openlibrary.org/b/id/{doc['cover_i']}-L.jpg" if "cover_i" in doc else ""
+
+    # --- Récupérer résumé et pages via l'API détaillée ---
+    details = fetch_book_details(doc.get("key", ""))
+    summary = ""
+    if details:
+        if isinstance(details.get("description"), dict):
+            summary = details["description"].get("value", "")
+        elif isinstance(details.get("description"), str):
+            summary = details["description"]
+        # Parfois pages dispo dans 'details'
+        pages = details.get("number_of_pages", pages)
+
+    return {
+        "titre": title,
+        "auteur": author,
+        "resume": summary,
+        "lien": book_link,
+        "categorie": category,
+        "editeur": editor,
+        "parution": parution,
+        "pages": pages,
+        "langue": langue,
+        "couverture": cover_url
+    }
+
+def main():
+    # Charger les livres existants si le fichier existe déjà
+    all_books = load_existing_books(OUTPUT_FILE)
+    books_already_loaded = len(all_books)
+    
+    successful_batches = 0
+    failed_batches = 0
+    
+    print(f"🚀 Début extraction de {TOTAL_BOOKS} livres français (par lots de {BATCH_SIZE})...")
+    print(f"📡 Délai entre requêtes: {DELAY_BETWEEN_REQUESTS}s")
+    print(f"🇫🇷 Recherche: livres en français uniquement")
+    
+    if books_already_loaded > 0:
+        print(f"📚 {books_already_loaded} livres déjà présents dans {OUTPUT_FILE}")
+        print(f"▶️  Reprise depuis le livre {books_already_loaded + 1}")
+    
+    for start in range(0, TOTAL_BOOKS, BATCH_SIZE):
+        current_batch_size = min(BATCH_SIZE, TOTAL_BOOKS - start)
+        print(f"\n📖 Lot {start // BATCH_SIZE + 1}: livres {start + 1} à {start + current_batch_size}...")
+        
+        data = fetch_books(start, current_batch_size)
+        docs = data.get("docs", [])
+        
+        if docs:
+            successful_batches += 1
+            print(f"✅ {len(docs)} livres récupérés dans ce lot")
+            
+            batch_books = []  # Livres du lot actuel
+            
+            for i, doc in enumerate(docs):
+                try:
+                    book_data = extract_metadata(doc)
+                    batch_books.append(book_data)
+                    
+                    # Progress indicator
+                    if (i + 1) % 10 == 0:
+                        print(f"   Traité {i + 1}/{len(docs)} livres du lot...")
+                        
+                except Exception as e:
+                    print(f"   ⚠️  Erreur traitement livre: {e}")
+                    continue
+                
+                # Délai pour éviter le rate limiting
+                time.sleep(0.2)
+            
+            # Ajouter les nouveaux livres du lot à la liste complète
+            all_books.extend(batch_books)
+            
+            # Sauvegarder après chaque lot réussi
+            if save_books_to_file(all_books, OUTPUT_FILE):
+                print(f"💾 Sauvegarde intermédiaire: {len(all_books)} livres total")
+            else:
+                print(f"❌ Échec sauvegarde - continuant quand même...")
+                
+        else:
+            failed_batches += 1
+            print(f"❌ Échec récupération du lot {start // BATCH_SIZE + 1}")
+        
+        # Délai entre lots
+        if start + BATCH_SIZE < TOTAL_BOOKS:
+            print(f"⏳ Attente {DELAY_BETWEEN_REQUESTS}s avant le prochain lot...")
+            time.sleep(DELAY_BETWEEN_REQUESTS)
+
+    # Statistiques finales
+    new_books = len(all_books) - books_already_loaded
+    print(f"\n📊 Extraction terminée:")
+    print(f"   ✅ Lots réussis: {successful_batches}")
+    print(f"   ❌ Lots échoués: {failed_batches}")
+    print(f"   📚 Nouveaux livres ajoutés: {new_books}")
+    print(f"   📚 Total livres dans le fichier: {len(all_books)}")
+
+    # Sauvegarde finale (surtout utile si aucun lot n'a réussi)
+    if all_books:
+        if save_books_to_file(all_books, OUTPUT_FILE):
+            print(f"💾 Sauvegarde finale réussie dans {OUTPUT_FILE}")
+        else:
+            print(f"❌ Échec sauvegarde finale")
+    else:
+        print("⚠️  Aucun livre récupéré - pas de fichier généré")
+
+if __name__ == "__main__":
+    main()
+

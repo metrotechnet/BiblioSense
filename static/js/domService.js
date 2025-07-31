@@ -143,6 +143,12 @@ const domService = {
             img.style.padding = "5px";
             leftCol.appendChild(img);
         }
+        //Otherwise use a book placeholder with title and author
+        else {  
+            const placeholder = this.createBookPlaceholder(book);
+            leftCol.appendChild(placeholder);
+        }
+
 
         // Author if available
         if (book.auteur) {
@@ -197,5 +203,84 @@ const domService = {
         item.appendChild(rightCol);
 
         return item;
+    },
+
+    /**
+     * Create a book placeholder element with title and author name.
+     * @param {object} book - The book object.
+     * @returns {HTMLElement} - The placeholder element.
+     */
+    createBookPlaceholder(book) {
+        // Calculate height based on content
+        const hasAuthor = book.auteur && book.auteur.trim() !== "";
+        const baseHeight = 100; // Base height for icon and title
+        const authorHeight = hasAuthor ? 25 : 0; // Additional height for author
+        const totalHeight = baseHeight + authorHeight + 20; // Add some padding
+        
+        const placeholder = document.createElement("div");
+        placeholder.style.width = "100px";
+        placeholder.style.height = `${totalHeight}px`;
+        placeholder.style.backgroundColor = "#f5f5f5";
+        placeholder.style.border = "2px solid #ddd";
+        placeholder.style.borderRadius = "4px";
+        placeholder.style.display = "flex";
+        placeholder.style.flexDirection = "column";
+        placeholder.style.justifyContent = "center";
+        placeholder.style.alignItems = "center";
+        placeholder.style.padding = "8px";
+        placeholder.style.margin = "5px";
+        placeholder.style.textAlign = "center";
+        placeholder.style.fontSize = "10px";
+        placeholder.style.color = "#666";
+        placeholder.style.fontFamily = "Arial, sans-serif";
+        placeholder.style.lineHeight = "1.2";
+        placeholder.style.wordWrap = "break-word";
+        placeholder.style.overflow = "hidden";
+
+        // Book icon (simple representation)
+        const bookIcon = document.createElement("div");
+        bookIcon.style.width = "30px";
+        bookIcon.style.height = "40px";
+        bookIcon.style.backgroundColor = "#e0e0e0";
+        bookIcon.style.border = "1px solid #ccc";
+        bookIcon.style.borderRadius = "2px";
+        bookIcon.style.marginBottom = "8px";
+        bookIcon.style.position = "relative";
+        
+        // Add a simple spine line to the book icon
+        const spine = document.createElement("div");
+        spine.style.position = "absolute";
+        spine.style.left = "3px";
+        spine.style.top = "5px";
+        spine.style.bottom = "5px";
+        spine.style.width = "1px";
+        spine.style.backgroundColor = "#bbb";
+        bookIcon.appendChild(spine);
+        
+        placeholder.appendChild(bookIcon);
+
+        // Title (truncated if too long)
+        const title = book.titre || book.label || "Titre inconnu";
+        const titleDiv = document.createElement("div");
+        titleDiv.style.fontWeight = "bold";
+        titleDiv.style.marginBottom = "4px";
+        titleDiv.style.maxHeight = "45px";
+        titleDiv.style.overflow = "hidden";
+        titleDiv.textContent = title.length > 25 ? title.substring(0, 25) + "..." : title;
+        placeholder.appendChild(titleDiv);
+
+        // Author (truncated if too long)
+        if (hasAuthor) {
+            const authorDiv = document.createElement("div");
+            authorDiv.style.fontSize = "9px";
+            authorDiv.style.fontStyle = "italic";
+            authorDiv.style.maxHeight = "20px";
+            authorDiv.style.overflow = "hidden";
+            const author = book.auteur;
+            authorDiv.textContent = author.length > 20 ? author.substring(0, 20) + "..." : author;
+            placeholder.appendChild(authorDiv);
+        }
+
+        return placeholder;
     }
 };
