@@ -303,7 +303,8 @@ def filter_categories():
 # -------------------- Main Entry Point --------------------
 
 if __name__ == "__main__":
+    print("Starting BiblioSense app...")
     # Get port from environment variable for Cloud Run compatibility
     port = int(os.environ.get('PORT', 8080))
     # Run the Flask app
-    app.run(host='0.0.0.0', port=port, debug=False)
+    serve(app, host='0.0.0.0', port=port)

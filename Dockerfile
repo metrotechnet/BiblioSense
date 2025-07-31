@@ -35,4 +35,4 @@ USER appuser
 EXPOSE $PORT
 
 # Command to run the application using waitress for production
-CMD exec waitress-serve --host=0.0.0.0 --port=$PORT --threads=8 app:app
+CMD ["python", "app.py"]
