@@ -34,5 +34,5 @@ USER appuser
 # Expose the port that the app runs on
 EXPOSE $PORT
 
-# Command to run the application using gunicorn for production
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
+# Command to run the application using waitress for production
+CMD exec waitress-serve --host=0.0.0.0 --port=$PORT --threads=8 app:app
