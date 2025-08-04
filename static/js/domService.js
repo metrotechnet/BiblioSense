@@ -36,16 +36,31 @@ const domService = {
         if (!btn) return;
         btn.disabled = true;
         btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+        //Disable search-input
+        const searchInput = document.getElementById("search-input");    
+        if (searchInput) searchInput.disabled = true;
+        //disable reset-btn
+        const resetBtn = document.getElementById("reset-btn");
+        if (resetBtn) resetBtn.disabled = true;
+
+
     },
 
     /**
      * Restore the search button content and enable it.
      */
     stopSpinner() {
+
         const btn = document.getElementById("search-btn");
         if (!btn) return;
         btn.disabled = false;
         btn.innerHTML = originalBtnHTML;
+        //enable search-input
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) searchInput.disabled = false;
+        //enable reset-btn
+        const resetBtn = document.getElementById("reset-btn");
+        if (resetBtn) resetBtn.disabled = false;
     },
 
     /**
@@ -61,10 +76,13 @@ const domService = {
      * Render a list of books in the specified container, processing in chunks for performance.
      * @param {Array} books - Array of book objects to render.
      * @param {string} containerId - The ID of the container element.
+     * @param {object} paginationInfo - Optional pagination information with range and total_count.
      */
-    renderBookList(books, containerId = "book-list") {
+    renderBookList(books, message = "",containerId = "book-list", paginationInfo = null) {
         const container = document.getElementById(containerId);
         if (!container) return;
+       // Ensure the container is visible before scrolling
+         document.getElementById("list-container").scrollTop = 0;
 
         // Show error if no books found
         if (!books || books.length === 0) {
@@ -72,38 +90,252 @@ const domService = {
             return;
         }
 
+        // Stop any previous rendering process
+        this.stopRenderingProcess();
+
         /**
          * Process books in chunks to avoid blocking the interface.
          * @param {object} handle - Reference to domService for method calls.
          */
-        // Ensure the container is visible before scrolling
-        container.style.left = "0";
-        container.scrollTop = 0;
+ 
 
+        // Clear container and create main content area
+        container.innerHTML = "";
+                // If a message is provided, display it
+        if (message) {
+            container.innerHTML = `<div class="alert alert-success" role="alert">${message}</div>`;
+        } 
+        const contentArea = document.createElement("div");
+        contentArea.id = containerId + "-content";
+        container.appendChild(contentArea);
+
+        // Set rendering flag to true
+        this._isRendering = true;
+        this._renderingTimeoutId = null;
 
         let index = 0;
-        function processChunk(handle) {
+        const processChunk = (handle) => {
+            // Check if rendering should be stopped
+            if (!handle._isRendering) {
+                console.log("Rendering process interrupted");
+                return;
+            }
+
             const chunkSize = 10; // Number of items to process per chunk
             const fragment = document.createDocumentFragment(); // Use a fragment for better performance
 
             // Process a chunk of books
             for (let i = 0; i < chunkSize && index < books.length; i++, index++) {
+                // Check again if rendering should be stopped (in case of interruption during processing)
+                if (!handle._isRendering) {
+                    console.log("Rendering process interrupted during chunk processing");
+                    return;
+                }
+                
                 const book = books[index];
                 if (!book) continue; // Skip if book is undefined
                 const item = handle.createBookListItem(book);
                 fragment.appendChild(item);
             }
 
-            container.appendChild(fragment);
+            contentArea.appendChild(fragment);
 
-            if (index < books.length) {
+            if (index < books.length && handle._isRendering) {
+                console.log("Rendering chunk " + Math.ceil(100 * index / books.length)+ "% complete");
                 // Schedule the next chunk
-                setTimeout(() => processChunk(handle), 0);
-            } 
-        }
+                handle._renderingTimeoutId = setTimeout(() => processChunk(handle), 100);
+            } else {
+                // Rendering complete or stopped
+                handle._isRendering = false;
+                handle._renderingTimeoutId = null;
+                if (index >= books.length) {
+                    console.log("Rendering process completed");
+                    // Add pagination after rendering is complete
+                    if (paginationInfo) {
+                        handle.addPagination(container, paginationInfo);
+                    }
+                }
+            }
+        };
 
         // Start processing the first chunk
         processChunk(this);
+    },
+
+    /**
+     * Stop the current rendering process.
+     */
+    stopRenderingProcess() {
+        if (this._isRendering) {
+            this._isRendering = false;
+            if (this._renderingTimeoutId) {
+                clearTimeout(this._renderingTimeoutId);
+                this._renderingTimeoutId = null;
+            }
+            console.log("Rendering process stopped externally");
+        }
+    },
+
+    /**
+     * Add pagination controls to the container.
+     * @param {HTMLElement} container - The container element.
+     * @param {object} paginationInfo - Pagination information with range, total_count, and source.
+     */
+    addPagination(container, paginationInfo) {
+        const { range, total_count, source = 'all' } = paginationInfo;
+        
+        if (!range || !total_count ) return;
+
+        const { start, end, count } = range;
+       
+        const itemsPerPage = count;
+        const currentPage = Math.floor(start / itemsPerPage) + 1;
+        const totalPages = Math.ceil(total_count / itemsPerPage);
+
+        // Create pagination container
+        const paginationContainer = document.createElement("div");
+        paginationContainer.className = "pagination-container";
+        paginationContainer.style.marginTop = "20px";
+        paginationContainer.style.textAlign = "center";
+        paginationContainer.style.padding = "20px";
+        paginationContainer.style.borderTop = "1px solid #ddd";
+
+        // Create pagination info
+        const paginationInfo_div = document.createElement("div");
+        paginationInfo_div.className = "pagination-info";
+        paginationInfo_div.style.marginBottom = "15px";
+        paginationInfo_div.style.color = "#666";
+        paginationInfo_div.innerHTML = `
+            Affichage des livres ${start + 1} à ${Math.min(end + 1, total_count)} sur ${total_count} 
+            (Page ${currentPage} sur ${totalPages})
+        `;
+
+        // Create pagination controls
+        const paginationControls = document.createElement("nav");
+        paginationControls.setAttribute("aria-label", "Navigation des pages");
+        
+        const paginationList = document.createElement("ul");
+        paginationList.className = "pagination justify-content-center";
+        paginationList.style.marginBottom = "0";
+
+        // Previous button
+        if (currentPage > 1) {
+            const prevItem = this.createPaginationItem("Précédent", currentPage - 1, itemsPerPage, source, false);
+            paginationList.appendChild(prevItem);
+        }
+
+        // Page numbers
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        // First page if not in range
+        if (startPage > 1) {
+            paginationList.appendChild(this.createPaginationItem("1", 1, itemsPerPage, source, false));
+            if (startPage > 2) {
+                const ellipsis = document.createElement("li");
+                ellipsis.className = "page-item disabled";
+                ellipsis.innerHTML = '<span class="page-link">...</span>';
+                paginationList.appendChild(ellipsis);
+            }
+        }
+
+        // Page range
+        for (let page = startPage; page <= endPage; page++) {
+            const isActive = page === currentPage;
+            paginationList.appendChild(this.createPaginationItem(page.toString(), page, itemsPerPage, source, isActive));
+        }
+
+        // Last page if not in range
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsis = document.createElement("li");
+                ellipsis.className = "page-item disabled";
+                ellipsis.innerHTML = '<span class="page-link">...</span>';
+                paginationList.appendChild(ellipsis);
+            }
+            paginationList.appendChild(this.createPaginationItem(totalPages.toString(), totalPages, itemsPerPage, source, false));
+        }
+
+        // Next button
+        if (currentPage < totalPages) {
+            const nextItem = this.createPaginationItem("Suivant", currentPage + 1, itemsPerPage, source, false);
+            paginationList.appendChild(nextItem);
+        }
+
+        paginationControls.appendChild(paginationList);
+        paginationContainer.appendChild(paginationInfo_div);
+        paginationContainer.appendChild(paginationControls);
+        container.appendChild(paginationContainer);
+    },
+
+    /**
+     * Create a pagination item (button).
+     * @param {string} text - The text to display on the button.
+     * @param {number} page - The page number.
+     * @param {number} itemsPerPage - Number of items per page.
+     * @param {string} source - Data source ('all' or 'filtered').
+     * @param {boolean} isActive - Whether this is the current page.
+     * @returns {HTMLElement} - The pagination item element.
+     */
+    createPaginationItem(text, page, itemsPerPage, source, isActive) {
+        const listItem = document.createElement("li");
+        listItem.className = `page-item ${isActive ? 'active' : ''}`;
+
+        const link = document.createElement("a");
+        link.className = "page-link";
+        link.href = "#";
+        link.textContent = text;
+        link.style.cursor = "pointer";
+
+        if (!isActive) {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                this.loadPage(page, itemsPerPage, source);
+            });
+        }
+
+        listItem.appendChild(link);
+        return listItem;
+    },
+
+    /**
+     * Load a specific page of books.
+     * @param {number} page - The page number to load.
+     * @param {number} itemsPerPage - Number of items per page.
+     * @param {string} source - Data source ('all' or 'filtered').
+     */
+    loadPage(page, itemsPerPage, source) {
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage - 1;
+        
+        console.log(`Loading page ${page}: items ${start}-${end} from ${source}`);
+        
+        // Show loading spinner
+        this.startSpinner();
+        
+        // Construct URL with source parameter
+        const url = `/books/${start}/${end}?source=${source}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                this.stopSpinner();
+                if (data.error) {
+                    this.showError(data.error);
+                } else {
+                    const paginationInfo = {
+                        range: data.range,
+                        total_count: data.total_count,
+                        source: data.source
+                    };
+                    this.renderBookList(data.book_list,"","book-list", paginationInfo);
+                }
+            })
+            .catch(error => {
+                this.stopSpinner();
+                console.error('Error loading page:', error);
+                this.showError("Erreur lors du chargement de la page.");
+            });
     },
 
     /**

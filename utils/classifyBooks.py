@@ -2,18 +2,53 @@ import pandas as pd
 from openai import OpenAI
 import json
 import os
+from gpt_services import  get_secret
+
 # Configure your OpenAI API key
-# OpenAI API key depuis les variables d'environnement
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY n'est pas définie dans les variables d'environnement")
+#
     
-BOOK_DATABASE_FILE = "dbase/livres_pretnumerique.json"
+BOOK_DATABASE_FILE = "../dbase/prenumerique_complet.json"
 OUTPUT_FILE = "book_dbase.json"
-TAXONOMY_FILE = "dbase/classification_books.json"
+TAXONOMY_FILE = "../dbase/classification_books.json"
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+# Configuration de base
+DEFAULT_SECRET_ID = "openai-api-key"
+DEFAULT_CREDENTIALS_PATH = "../bibliosense-467520-789ce439ce99.json"
+PROJECT_ID = "bibliosense-467520"  # valeur par défaut
+def init_openai_client():
+    """
+    Initialize OpenAI client with API key from Secret Manager or environment variables.
+    """
+    global openai_client
+    
+    # Si exécuté en local, charger les credentials depuis un fichier
+    project_id = PROJECT_ID
+    if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = DEFAULT_CREDENTIALS_PATH
+        try:
+            with open(DEFAULT_CREDENTIALS_PATH, 'r') as f:
+                credentials = json.load(f)
+            project_id = credentials['project_id']
+        except Exception as e:
+            print(f"⚠️  Error loading credentials file: {e}")
 
+    # Essayer Secret Manager seulement si pas de variable d'environnement
+    try:
+        OPENAI_API_KEY = get_secret(DEFAULT_SECRET_ID, project_id=project_id)
+        if OPENAI_API_KEY:
+            print("✅ Clé OpenAI récupérée depuis Secret Manager")
+        else:
+            raise ValueError("OPENAI_API_KEY non trouvée")
+    except Exception as e:
+        print(f"Erreur Secret Manager: {str(e)[:100]}...")
+        raise ValueError("OPENAI_API_KEY n'est pas définie (ni dans .env ni dans Secret Manager)")
+
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+    print("✅ OpenAI client initialized")
+
+    return openai_client
+
+openai_client = init_openai_client()
 # Load taxonomy from file
 with open(TAXONOMY_FILE, "r", encoding="utf-8") as f:
     taxonomy = json.load(f)
@@ -53,7 +88,7 @@ def classify_with_gpt(bookinfo, taxonomy, language):
     try:
         # Call OpenAI API for classification
         response = openai_client.responses.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             input=[
                 {"role": "user", "content": prompt}
             ],

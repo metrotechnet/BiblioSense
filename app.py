@@ -1,17 +1,21 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 import pandas as pd
 from openai import OpenAI
 import json
 from waitress import serve
 import os
 import time
-from gpt_services import get_catagories_with_gpt,  get_secret
+import uuid
+from utils.gpt_services import get_catagories_with_gpt,  get_secret
+from utils.text_matching import smart_keyword_match
 
 # -------------------- Global Data Storage --------------------
 
 # Global variables to store loaded data
 taxonomy_data = None
 books_data = None
+# Dictionary to store filtered results per session
+user_filtered_books = {}
 openai_client = None
 
 # -------------------- Configuration --------------------
@@ -44,6 +48,9 @@ def init_data():
         with open(BOOK_DATABASE_FILE, "r", encoding="utf-8") as f:
             books_data = json.load(f)
         print(f"✅ Book data loaded from {BOOK_DATABASE_FILE} ({len(books_data)} books)")
+        # reorder book by alphabetical order of title
+        # books_data.sort(key=lambda x: x.get("titre", "").lower())
+
         
     except Exception as e:
         print(f"❌ Error loading data: {e}")
@@ -88,6 +95,9 @@ def create_app():
     """
     app = Flask(__name__)
     
+    # Configure session
+    app.secret_key = os.environ.get('SECRET_KEY', 'biblio-sense-1234')
+    
     # Initialize data and services
     init_data()
     init_openai_client()
@@ -100,14 +110,105 @@ def create_app():
         Render the main graph visualization page.
         """
         return render_template("index.html")
-
-    @app.route("/books")
-    def books_data_route():
+    
+    # create a service that returns the number of books
+    @app.route("/count_books")
+    def count_books():
         """
-        Return the book graph data (nodes and edges) as JSON for the frontend.
+        Return the total number of books in the database.
         """
         global books_data
-        return {"book_list": books_data}
+        return jsonify({"count": len(books_data)})  # Return the total book count
+
+    @app.route("/session_info")
+    def session_info():
+        """
+        Return session information for debugging/monitoring.
+        """
+        global user_filtered_books
+        
+        # Ensure user has a session
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        
+        user_id = session['user_id']
+        
+        return jsonify({
+            "user_id": user_id,
+            "active_sessions": len(user_filtered_books),
+            "has_filtered_results": user_id in user_filtered_books and user_filtered_books[user_id] is not None,
+            "filtered_count": len(user_filtered_books[user_id]) if user_id in user_filtered_books and user_filtered_books[user_id] else 0
+        })
+
+    @app.route("/books")
+    @app.route("/books/<int:index>")
+    @app.route("/books/<int:start>/<int:end>")
+    def books_data_route(index=None, start=None, end=None):
+        """
+        Return the book graph data (nodes and edges) as JSON for the frontend.
+        
+        Routes:
+        - /books: Return all books
+        - /books/<index>: Return a specific book by index
+        - /books/<start>/<end>: Return books from start to end index (inclusive)
+        
+        Query Parameters:
+        - source: 'all' (default) for books_data or 'filtered' for filtered_books
+        """
+        global books_data, user_filtered_books
+        
+        # Ensure user has a session
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        
+        user_id = session['user_id']
+        
+        # Get source parameter (default to 'all')
+        source = request.args.get('source', 'all').lower()
+        
+        # Select the appropriate data source
+        if source == 'filtered':
+            if user_id not in user_filtered_books or user_filtered_books[user_id] is None:
+                return {"error": "No filtered results available. Please perform a search first."}, 400
+            current_books = user_filtered_books[user_id]
+            source_name = "filtered books"
+        else:
+            current_books = books_data
+            source_name = "all books"
+        
+        # Return specific book by index
+        if index is not None:
+            if 0 <= index < len(current_books):
+                return {
+                    "book": current_books[index], 
+                    "index": index,
+                    "source": source,
+                    "total_count": len(current_books),
+                    "user_id": user_id
+                }
+            else:
+                return {"error": f"Index {index} out of range for {source_name}. Valid range: 0-{len(current_books)-1}"}, 404
+        
+        # Return range of books
+        if start is not None and end is not None:
+            # if start < 0 or end >= len(current_books) or start > end:
+            #     return {"error": f"Invalid range [{start}:{end}] for {source_name}. Valid range: 0-{len(current_books)-1}"}, 400
+            # end = min(end, len(current_books) - 1)  # Ensure end is within bounds
+            return {
+                "book_list": current_books[start:end+1], 
+                "range": {"start": start, "end": end, "count": end - start + 1},
+                "source": source,
+                "total_count": len(current_books),
+                "user_id": user_id
+            }
+        
+        # Return all books (default behavior)
+        return {
+            "book_list": current_books,
+            "source": source,
+            "total_count": len(current_books),
+            "user_id": user_id
+        }
 
     @app.route("/filter", methods=["POST"])
     def filter_categories():
@@ -121,12 +222,17 @@ def create_app():
         # Start timing
         start_time = time.time()
         
-        global taxonomy_data, books_data, openai_client
+        global taxonomy_data, books_data, openai_client, user_filtered_books
         
+        # Ensure user has a session
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+        
+        user_id = session['user_id']
         data = request.get_json()
         text = data.get("query", "")
         
-        print(f"🔍 Processing query: '{text}'")
+        print(f"🔍 Processing query for user {user_id}: '{text}'")
 
         try:
             # Get categories and keywords from GPT (sequential calls since second depends on first)
@@ -137,55 +243,112 @@ def create_app():
             print(f"Categories from GPT: {categories}")
             
 
-            # Book filtering logic
+            # Book filtering logic with performance optimizations
             filter_start = time.time()
-            filteredNodes = []
+            
+            # Pre-compute keyword sets for faster lookups
+            keyword_items = list(categories["Mots-clés"].items())
+            taxonomy_items = list(categories["Taxonomie"].items())
+            title_author_fields = {"titre", "auteur"}
+            
+            # Pre-process taxonomy lookup sets for faster intersection
+            taxonomy_lookup = {}
+            for taxo_key, taxo_classes in taxonomy_items:
+                taxonomy_lookup[taxo_key] = {}
+                for sub_key, sub_values_set in taxo_classes.items():
+                    taxonomy_lookup[taxo_key][sub_key] = set(sub_values_set)
             
             # Single pass through books with optimized scoring
             scored_books = []
             for book in books_data:
+                # Early exit if no potential matches
+                has_keywords = any(book.get(kw_key) for kw_key, _ in keyword_items)
+                has_taxonomy = book.get("classification")
+                
+                if not has_keywords and not has_taxonomy:
+                    continue
+                
                 taxonomy_score = 0
-                keyword_score = 0
+                title_author_score = 0
+                other_keyword_score = 0
                 
-                # Parse book taxonomy once
-                try:
-                    book_taxonomy = json.loads(book.get("classification", "{}"))
-                except (json.JSONDecodeError, TypeError):
-                    book_taxonomy = {}
+                # Parse book taxonomy once (only if needed)
+                book_taxonomy = {}
+                if has_taxonomy and taxonomy_items:
+                    try:
+                        book_taxonomy = json.loads(book["classification"])
+                    except (json.JSONDecodeError, TypeError, KeyError):
+                        book_taxonomy = {}
                 
-                # Check taxonomy matches using pre-processed lookup
-                for taxo_key, taxo_classes in categories["Taxonomie"].items():
-                    if taxo_key in book_taxonomy:
-                        for sub_key, sub_values_set in taxo_classes.items():
-                            if sub_key in book_taxonomy[taxo_key]:
-                                book_values = book_taxonomy[taxo_key][sub_key]
-                                if isinstance(book_values, list):
-                                    # Use set intersection for faster matching
-                                    matches = set(sub_values_set).intersection(set(book_values))
-                                    taxonomy_score += len(matches)
-                                elif book_values in sub_values_set:
-                                    taxonomy_score += 1
+                # Check taxonomy matches using pre-computed lookup
+                if book_taxonomy:
+                    for taxo_key, taxo_classes_lookup in taxonomy_lookup.items():
+                        book_taxo_section = book_taxonomy.get(taxo_key)
+                        if book_taxo_section:
+                            for sub_key, sub_values_set in taxo_classes_lookup.items():
+                                book_values = book_taxo_section.get(sub_key)
+                                if book_values:
+                                    if isinstance(book_values, list):
+                                        # Use pre-computed sets for faster intersection
+                                        matches = sub_values_set.intersection(book_values)
+                                        taxonomy_score += len(matches)
+                                    elif book_values in sub_values_set:
+                                        taxonomy_score += 1
                 
-                # Check keyword matches with pre-lowercased keywords
-                for keyword_key, keyword_value_lower in categories["Mots-clés"].items():
-                    book_field = book.get(keyword_key, "")
-                    if book_field and keyword_value_lower.lower() in book_field.lower():
-                        keyword_score += 1
+                # Check keyword matches with smart matching (only if has keywords)
+                if has_keywords:
+                    for keyword_key, keyword_values in keyword_items:
+                        book_field = book.get(keyword_key)
+                        if not book_field:
+                            continue
+                            
+                        is_title_author = keyword_key in title_author_fields
+                        
+                        # Handle both single keywords (string) and multiple keywords (list)
+                        if isinstance(keyword_values, str):
+                            # Backward compatibility for single keyword
+                            match_score = smart_keyword_match(keyword_values, book_field, keyword_key)
+                            if match_score > 0.5:
+                                if is_title_author:
+                                    title_author_score += match_score
+                                else:
+                                    other_keyword_score += match_score
+                        elif isinstance(keyword_values, list):
+                            # New logic for multiple synonymous keywords
+                            best_match_score = 0
+                            for keyword_variant in keyword_values:
+                                match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
+                                if match_score > best_match_score:
+                                    best_match_score = match_score
+                                # Early exit if perfect match found
+                                if best_match_score >= 1.0:
+                                    break
+                            # Only count the best match to avoid double-counting synonyms
+                            if best_match_score > 0.5:
+                                if is_title_author:
+                                    title_author_score += best_match_score
+                                else:
+                                    other_keyword_score += best_match_score
                 
-                # Calculate total score with keyword priority
-                # Keywords get 10x weight to appear at top of results
-                total_score = (keyword_score * 10) + taxonomy_score
+                # Calculate total score with title/author priority
+                total_score = (title_author_score * 100) + (other_keyword_score * 10) + taxonomy_score
                 
                 # Only add books with positive scores
                 if total_score > 0:
-                    book_copy = book.copy()  # Avoid modifying original data
-                    book_copy["score"] = total_score
-                    book_copy["keyword_matches"] = keyword_score
-                    book_copy["taxonomy_matches"] = taxonomy_score
-                    scored_books.append(book_copy)
+                    # Use dict literal instead of copy() for better performance
+                    scored_books.append({
+                        **book,
+                        "score": total_score,
+                        "title_author_matches": title_author_score,
+                        "other_keyword_matches": other_keyword_score,
+                        "taxonomy_matches": taxonomy_score
+                    })
             
-            # Sort by descending score (keywords will be at top due to higher weight)
-            filteredNodes = sorted(scored_books, key=lambda x: x["score"], reverse=True)
+            # Sort by descending score (title/author matches will be at top due to highest weight)
+            filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
+            
+            # Store filtered results for this user session
+            user_filtered_books[user_id] = filtered_books
             
             filter_time = time.time() - filter_start
             print(f"⏱️  Book filtering: {filter_time:.2f}s")
@@ -193,29 +356,32 @@ def create_app():
             # Calculate total time
             total_time = time.time() - start_time
             
-            print(f"📊 Performance Summary:")
+            print(f"📊 Performance Summary for user {user_id}:")
             print(f"   - Total GPT time: {total_gpt_time:.2f}s ({(total_gpt_time/total_time)*100:.1f}%)")
             print(f"   - Book filtering: {filter_time:.2f}s ({(filter_time/total_time)*100:.1f}%)")
             print(f"   - Total request time: {total_time:.2f}s")
-            print(f"   - Books found: {len(filteredNodes)}")
+            print(f"   - Books found: {len(filtered_books)}")
             
-            # Log keyword vs taxonomy matches
-            keyword_matches = sum(1 for book in filteredNodes if book.get("keyword_matches", 0) > 0)
-            taxonomy_only = len(filteredNodes) - keyword_matches
-            print(f"   - Keyword matches: {keyword_matches} (priority)")
-            print(f"   - Taxonomy only: {taxonomy_only}")
+            # Log different types of matches with priority
+            title_author_matches = sum(1 for book in filtered_books if book.get("title_author_matches", 0) > 0)
+            other_keyword_matches = sum(1 for book in filtered_books if book.get("other_keyword_matches", 0) > 0)
+            taxonomy_only = len(filtered_books) - title_author_matches - other_keyword_matches
+            print(f"   - Title/Author matches: {title_author_matches} (highest priority)")
+            print(f"   - Other keyword matches: {other_keyword_matches} (medium priority)")
+            print(f"   - Taxonomy only: {taxonomy_only} (lowest priority)")
 
             # If no books found
-            if not filteredNodes:
+            if not filtered_books:
                 return jsonify({
-                    "book_list": [], 
-                    "description": "Aucun livre trouvé pour cette requête."
+                    "description": "Aucun livre trouvé pour cette requête.",
+                    "user_id": user_id
                 })
 
-            # Return filtered books and description with performance metrics
+            # Return length of filtered books and description with performance metrics
             return jsonify({
-                "book_list": filteredNodes, 
-                "description": categories["Description"]
+                "description": categories["Description"],
+                "user_id": user_id,
+                "total_books": len(filtered_books)
             })
 
         except json.JSONDecodeError as e:

@@ -9,7 +9,7 @@ import random
 SEARCH_URL = "https://openlibrary.org/search.json"
 WORK_URL = "https://openlibrary.org/works/"
 OUTPUT_FILE = "openlibrary_livres_francais.json"
-TOTAL_BOOKS = 100   # Nombre total de livres à récupérer
+TOTAL_BOOKS = 10000   # Nombre total de livres à récupérer
 BATCH_SIZE = 50     # Réduit pour éviter les erreurs serveur
 MAX_RETRIES = 3     # Nombre de tentatives max
 DELAY_BETWEEN_REQUESTS = 1  # Délai entre requêtes

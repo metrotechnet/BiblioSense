@@ -23,8 +23,7 @@
 document.addEventListener("DOMContentLoaded", async function () {
     try {
         // Fetch and display the initial list of books
-        const books = await dataService.fetchBooks();
-        domService.renderBookList(books.book_list);
+        dataService.fetchBooks("all");
     } catch (error) {
         domService.showError("Erreur lors du chargement des livres. Veuillez réessayer plus tard.");
     }
@@ -41,23 +40,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!query) return;
 
             try {
+                // Start spinner to indicate loading state
                 domService.startSpinner();
-                const result = await dataService.searchBooks(query);
-                domService.stopSpinner();
-                searchInput.value = "";
-                domService.clearContainer();
 
-                if (!result || !result.book_list || result.book_list.length === 0) {
-                    domService.showError("Aucun résultat trouvé.");
-                    return;
-                }
+                // Perform the search using the data service
+                const result = await dataService.searchBooks(query);
+
+                // Stop spinner after search is complete    
+                domService.stopSpinner();
+                // Clear the search input field
+                searchInput.value = "";
+
 
                 // Show a message with the number of results found
-                const message = (result.description || "") + " (" + (result.book_list ? result.book_list.length : 0) + " documents trouvés)";
-                domService.showSuccess(message);
-
-                // Display the search results
-                domService.renderBookList(result.book_list);
+                const message = (result.description || "") + " (" + result.total_books + " documents trouvés)";
+                // Fetch filtered books to update the list
+                dataService.fetchBooks("filtered", message);
 
             } catch (error) {
                 domService.showError("Erreur lors de la recherche. Veuillez réessayer.");
@@ -84,18 +82,5 @@ function resetBookList() {
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
 
-    domService.clearContainer();
-
-    dataService.fetchBooks()
-        .then(data => {
-            if (data && data.book_list) {
-                domService.renderBookList(data.book_list);
-            } else {
-                domService.showError("Aucun livre disponible.");
-            }
-        })
-        .catch(error => {
-            console.error("Error resetting book list:", error);
-            domService.showError("Erreur lors de la réinitialisation de la liste des livres.");
-        });
+    dataService.fetchBooks("all");
 }
