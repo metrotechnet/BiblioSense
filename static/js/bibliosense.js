@@ -84,3 +84,22 @@ function resetBookList() {
 
     dataService.fetchBooks("all");
 }
+
+// Handle window resize to update book display format
+let resizeTimeout;
+window.addEventListener("resize", () => {
+    // Debounce resize events to avoid excessive re-rendering
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        // Get current book list
+        const bookListContainer = document.getElementById("book-list");
+        if (bookListContainer && bookListContainer.children.length > 0) {
+            // Store current books data if available
+            const currentBooks = window.currentBooksData;
+            if (currentBooks) {
+                // Re-render books with appropriate format for current screen size
+                domService.renderBookList(currentBooks, "", "book-list");
+            }
+        }
+    }, 250); // Wait 250ms after resize stops
+});

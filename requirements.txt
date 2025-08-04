@@ -1,7 +1,20 @@
+# Core Web Framework
 Flask==3.0.0
+
+# Data Processing & Analysis
 pandas==2.1.4
+
+# AI/GPT Integration
 openai==1.84.0
+
+# Production Web Server
 waitress==3.0.0
+
+# Google Cloud Services
 google-cloud-secret-manager==2.20.2
+
+# HTTP Requests
 requests==2.31.0
+
+# System Monitoring (Phase 2 Performance Optimization)
 psutil==5.9.8

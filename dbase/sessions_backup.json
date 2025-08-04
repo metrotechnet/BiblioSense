@@ -1,10 +1,5 @@
 {
-  "active_sessions": {
-    "0639c1f7-af79-4a3c-bcfe-0b7c1a2b0678": {
-      "book_count": 7384,
-      "last_updated": 1754335069.502065
-    }
-  },
-  "total_sessions": 1,
-  "backup_time": 1754335069.502065
+  "active_sessions": {},
+  "total_sessions": 0,
+  "backup_time": 1754339979.044079
 }

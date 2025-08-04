@@ -84,6 +84,9 @@ const domService = {
        // Ensure the container is visible before scrolling
          document.getElementById("list-container").scrollTop = 0;
 
+        // Store books data for responsive re-rendering
+        window.currentBooksData = books;
+
         // Show error if no books found
         if (!books || books.length === 0) {
             this.showError("Aucun livre trouvé.", containerId);
@@ -345,7 +348,16 @@ const domService = {
      */
     createBookListItem(book) {
         const item = document.createElement("div");
-        item.className = "book-list-item";
+        item.className = "book-list-item list-group-item";
+        
+        // Check if mobile view
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            return this.createMobileBookItem(book);
+        }
+        
+        // Desktop version (existing code)
         item.style.display = "flex";
         item.style.gap = "20px";
         item.style.alignItems = "flex-start";
@@ -407,7 +419,157 @@ const domService = {
             this.displayBookDetails(book,item,leftCol);
         }
 
+        return item;
+    },
 
+    /**
+     * Create a mobile-optimized book item with collapsible details.
+     * @param {object} book - The book object to render.
+     * @returns {HTMLElement} - The mobile DOM element for the book.
+     */
+    createMobileBookItem(book) {
+        const item = document.createElement("div");
+        item.className = "book-list-item list-group-item";
+        
+        // Main content (always visible)
+        const mainContent = document.createElement("div");
+        mainContent.className = "mobile-book-main";
+        
+        // Header with cover and basic info
+        const header = document.createElement("div");
+        header.className = "mobile-book-header";
+        
+        // Cover image (if available)
+        if (book.couverture) {
+            const img = document.createElement("img");
+            img.src = book.couverture;
+            img.alt = "Couverture";
+            img.className = "mobile-book-cover";
+            
+            img.onerror = () => {
+                img.style.display = "none";
+            };
+            
+            header.appendChild(img);
+        }
+        
+        // Book info container
+        const infoContainer = document.createElement("div");
+        infoContainer.className = "mobile-book-info";
+        
+        // Title
+        const title = document.createElement("div");
+        title.className = "mobile-book-title";
+        title.textContent = book.titre || book.label || "Titre inconnu";
+        infoContainer.appendChild(title);
+        
+        // Author
+        if (book.auteur) {
+            const author = document.createElement("div");
+            author.className = "mobile-book-author";
+            author.textContent = book.auteur;
+            infoContainer.appendChild(author);
+        }
+        
+        // Category
+        if (book.categorie) {
+            const category = document.createElement("div");
+            category.className = "mobile-book-category";
+            category.textContent = book.categorie;
+            infoContainer.appendChild(category);
+        }
+        
+        header.appendChild(infoContainer);
+        mainContent.appendChild(header);
+        
+        // Description complète in main section (always visible)
+        if (book.description) {
+            const description = document.createElement("div");
+            description.className = "mobile-book-description-main";
+            description.textContent = book.description;
+            mainContent.appendChild(description);
+        }
+        
+        item.appendChild(mainContent);
+        
+        // Toggle button for "Plus" section
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "mobile-more-toggle";
+        toggleBtn.innerHTML = `
+            <span>Plus d'informations</span>
+            <i class="bi bi-chevron-down"></i>
+        `;
+        
+        // Collapsible content (initially hidden)
+        const moreContent = document.createElement("div");
+        moreContent.className = "mobile-more-content";
+        
+        // Resume (but not description since it's already in main section)
+        if (book.resume) {
+            const resume = document.createElement("div");
+            resume.className = "mobile-book-description";
+            resume.innerHTML = `<strong>Résumé:</strong> ${book.resume}`;
+            moreContent.appendChild(resume);
+        }
+        
+        // Other metadata
+        const metaFields = [
+            { key: "editeur", label: "Éditeur" },
+            { key: "parution", label: "Parution" },
+            { key: "pages", label: "Pages" },
+            { key: "langue", label: "Langue" }
+        ];
+        
+        const metaContainer = document.createElement("div");
+        metaContainer.className = "mobile-book-meta";
+        
+        metaFields.forEach(field => {
+            if (book[field.key]) {
+                const metaItem = document.createElement("div");
+                metaItem.innerHTML = `<strong>${field.label}:</strong> ${book[field.key]}`;
+                metaItem.style.marginBottom = "5px";
+                metaContainer.appendChild(metaItem);
+            }
+        });
+        
+        if (metaContainer.children.length > 0) {
+            moreContent.appendChild(metaContainer);
+        }
+        
+        // Link
+        if (book.lien) {
+            const linkContainer = document.createElement("div");
+            linkContainer.style.marginTop = "10px";
+            linkContainer.style.textAlign = "center";
+            
+            const link = document.createElement("a");
+            link.href = book.lien;
+            link.textContent = "Voir sur pretnumerique.ca";
+            link.target = "_blank";
+            link.className = "btn btn-primary btn-sm";
+            
+            linkContainer.appendChild(link);
+            moreContent.appendChild(linkContainer);
+        }
+        
+        // Toggle functionality
+        toggleBtn.addEventListener("click", () => {
+            const isExpanded = moreContent.classList.contains("show");
+            
+            if (isExpanded) {
+                moreContent.classList.remove("show");
+                toggleBtn.classList.remove("expanded");
+                toggleBtn.querySelector("span").textContent = "Plus d'informations";
+            } else {
+                moreContent.classList.add("show");
+                toggleBtn.classList.add("expanded");
+                toggleBtn.querySelector("span").textContent = "Moins d'informations";
+            }
+        });
+        
+        item.appendChild(toggleBtn);
+        item.appendChild(moreContent);
+        
         return item;
     },
     displayBookDetails(book, item, leftCol) {
