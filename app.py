@@ -6,10 +6,17 @@ from waitress import serve
 import os
 import time
 import uuid
-from utils.gpt_services import get_catagories_with_gpt,  get_secret
+from utils.gpt_services import get_catagories_with_gpt, get_catagories_with_gpt_cached, create_cached_gpt_function
 from utils.text_matching import smart_keyword_match
+from utils.performance_monitor import PerformanceMonitor
+from utils.gpt_cache import GPTCache
+from utils.session_cleanup import SessionCleanup
+from utils.config import get_config, get_secret
 
 # -------------------- Global Data Storage --------------------
+
+# Get configuration based on environment
+app_config = get_config()
 
 # Global variables to store loaded data
 taxonomy_data = None
@@ -17,17 +24,34 @@ books_data = None
 # Dictionary to store filtered results per session
 user_filtered_books = {}
 openai_client = None
+cached_gpt_classifier = None  # Pre-configured cached GPT function
+
+# Initialize performance monitoring and optimization tools
+performance_monitor = PerformanceMonitor(
+    max_users=app_config.MAX_CONCURRENT_USERS,
+    memory_limit=app_config.MEMORY_LIMIT_PERCENT,
+    cpu_limit=app_config.CPU_LIMIT_PERCENT,
+    response_time_limit=app_config.MAX_RESPONSE_TIME
+)
+gpt_cache = GPTCache(
+    max_size=app_config.GPT_CACHE_SIZE,
+    ttl_seconds=app_config.GPT_CACHE_TTL
+)
+session_cleanup = None
 
 # -------------------- Configuration --------------------
 
+# Get configuration based on environment
+app_config = get_config()
+
 # Paths to JSON files for taxonomy and book data
-BOOK_DATABASE_FILE = "dbase/book_dbase.json"
-TAXONOMY_FILE = "dbase/classification_books.json"
+BOOK_DATABASE_FILE = app_config.BOOK_DATABASE_FILE
+TAXONOMY_FILE = app_config.TAXONOMY_FILE
 
 # Configuration de base
-DEFAULT_SECRET_ID = "openai-api-key"
-DEFAULT_CREDENTIALS_PATH = "../bibliosense-467520-789ce439ce99.json"
-PROJECT_ID = "bibliosense-467520"  # valeur par défaut
+DEFAULT_SECRET_ID = app_config.DEFAULT_SECRET_ID
+DEFAULT_CREDENTIALS_PATH = app_config.DEFAULT_CREDENTIALS_PATH
+PROJECT_ID = app_config.PROJECT_ID
 
 # -------------------- Initialization Functions --------------------
 
@@ -93,6 +117,8 @@ def create_app():
     """
     Application factory pattern for Flask app creation.
     """
+    global session_cleanup
+    
     app = Flask(__name__)
     
     # Configure session
@@ -101,6 +127,19 @@ def create_app():
     # Initialize data and services
     init_data()
     init_openai_client()
+    
+    # Initialize session cleanup for Phase 2 optimization
+    session_cleanup = SessionCleanup(
+        cleanup_interval=app_config.SESSION_CLEANUP_INTERVAL,
+        session_timeout=app_config.SESSION_TIMEOUT
+    )
+    session_cleanup.start_cleanup(user_filtered_books)
+    
+    # Create pre-configured cached GPT function
+    global cached_gpt_classifier
+    cached_gpt_classifier = create_cached_gpt_function(gpt_cache, openai_client, taxonomy_data)
+    
+    print("✅ Phase 2 optimizations initialized: Performance monitoring, GPT caching, Session cleanup")
     
     # -------------------- Flask Routes --------------------
 
@@ -130,9 +169,9 @@ def create_app():
     @app.route("/session_info")
     def session_info():
         """
-        Return session information for debugging/monitoring.
+        Return session information for debugging/monitoring with Phase 2 enhancements.
         """
-        global user_filtered_books
+        global user_filtered_books, performance_monitor, gpt_cache
         
         # Session should already exist from index route, but safety check
         if 'user_id' not in session:
@@ -141,11 +180,24 @@ def create_app():
         
         user_id = session['user_id']
         
+        # Update session activity for cleanup tracking
+        if session_cleanup:
+            session_cleanup.update_session_activity(user_id)
+        
+        # Get performance stats (use safe mode for debugging)
+        perf_stats = performance_monitor.get_stats(safe_mode=True)
+        cache_stats = gpt_cache.get_stats_fast()  # Version rapide pour éviter les blocages
+        cleanup_stats = session_cleanup.get_cleanup_stats() if session_cleanup else {}
+        
         return jsonify({
             "user_id": user_id,
             "active_sessions": len(user_filtered_books),
             "has_filtered_results": user_id in user_filtered_books and user_filtered_books[user_id] is not None,
-            "filtered_count": len(user_filtered_books[user_id]) if user_id in user_filtered_books and user_filtered_books[user_id] else 0
+            "filtered_count": len(user_filtered_books[user_id]) if user_id in user_filtered_books and user_filtered_books[user_id] else 0,
+            # Phase 2 monitoring data
+            "performance": perf_stats,
+            "cache": cache_stats,
+            "cleanup": cleanup_stats
         })
 
     @app.route("/books")
@@ -171,6 +223,10 @@ def create_app():
             print(f"⚠️  Session created in books_data_route (unexpected): {session['user_id']}")
         
         user_id = session['user_id']
+        
+        # Update session activity for Phase 2 tracking
+        if session_cleanup:
+            session_cleanup.update_session_activity(user_id)
         
         # Get source parameter (default to 'all')
         source = request.args.get('source', 'all').lower()
@@ -231,7 +287,15 @@ def create_app():
         # Start timing
         start_time = time.time()
         
-        global taxonomy_data, books_data, openai_client, user_filtered_books
+        global taxonomy_data, books_data, openai_client, user_filtered_books, performance_monitor, gpt_cache
+        
+        # Check if system should throttle requests (Phase 2 optimization)
+        should_throttle, throttle_reason = performance_monitor.should_throttle()
+        if should_throttle:
+            return jsonify({
+                "error": f"Service temporarily overloaded: {throttle_reason}. Please try again in a few moments.",
+                "retry_after": 30
+            }), 503
         
         # Session should already exist from index route, but safety check
         if 'user_id' not in session:
@@ -242,14 +306,18 @@ def create_app():
         data = request.get_json()
         text = data.get("query", "")
         
+        # Update session activity for Phase 2 tracking
+        if session_cleanup:
+            session_cleanup.update_session_activity(user_id)
+        
         print(f"🔍 Processing query for user {user_id}: '{text}'")
 
         try:
-            # Get categories and keywords from GPT (sequential calls since second depends on first)
+            # Phase 2: Use pre-configured cached GPT call (simplest approach)
             gpt_start = time.time()
-            categories = get_catagories_with_gpt(text, taxonomy_data, openai_client)
+            categories = cached_gpt_classifier(text)
             total_gpt_time = time.time() - gpt_start
-            print(f"⏱️  GPT categories classification: {total_gpt_time:.2f}s")
+                
             print(f"Categories from GPT: {categories}")
             
 
@@ -363,14 +431,27 @@ def create_app():
             filter_time = time.time() - filter_start
             print(f"⏱️  Book filtering: {filter_time:.2f}s")
 
-            # Calculate total time
+            # Calculate total time and track performance (Phase 2)
             total_time = time.time() - start_time
+            performance_monitor.track_request(user_id, total_time)
             
             print(f"📊 Performance Summary for user {user_id}:")
             print(f"   - Total GPT time: {total_gpt_time:.2f}s ({(total_gpt_time/total_time)*100:.1f}%)")
             print(f"   - Book filtering: {filter_time:.2f}s ({(filter_time/total_time)*100:.1f}%)")
             print(f"   - Total request time: {total_time:.2f}s")
             print(f"   - Books found: {len(filtered_books)}")
+            
+            # Phase 2: Log cache and performance statistics (safe mode)
+            cache_stats = gpt_cache.get_stats_fast()  # Version rapide
+            perf_stats = performance_monitor.get_stats(safe_mode=True)  # Mode sécurisé
+            print(f"🔄 Cache hit rate: {cache_stats['hit_rate_percent']:.1f}% ({cache_stats['cache_hits']}/{cache_stats['cache_hits'] + cache_stats['cache_misses']})")
+            
+            # Afficher la mémoire seulement si disponible (pas en mode debug)
+            if not perf_stats.get('debug_mode', False):
+                print(f"👥 Active users: {perf_stats['active_users']}, Memory: {perf_stats['memory_usage_percent']:.1f}%")
+            else:
+                print(f"👥 Active users: {perf_stats['active_users']} (debug mode)")
+            
             
             # Log different types of matches with priority
             title_author_matches = sum(1 for book in filtered_books if book.get("title_author_matches", 0) > 0)
@@ -391,19 +472,89 @@ def create_app():
             return jsonify({
                 "description": categories["Description"],
                 "user_id": user_id,
-                "total_books": len(filtered_books)
+                "total_books": len(filtered_books),
+                # Phase 2: Include performance metrics in response
+                "performance": {
+                    "response_time": total_time,
+                    "gpt_time": total_gpt_time,
+                    "filter_time": filter_time,
+                    "cache_hit": categories is not None and gpt_cache.get(text, taxonomy_data) is not None
+                }
             })
 
         except json.JSONDecodeError as e:
             total_time = time.time() - start_time
+            # Phase 2: Track failed requests for monitoring
+            performance_monitor.track_request(user_id, total_time)
             print(f"❌ JSON Decode Error: {e} (after {total_time:.2f}s)")
-            categories_labels = []
+            return jsonify({
+                "error": "Invalid response format from classification service",
+                "user_id": user_id,
+                "performance": {"response_time": total_time, "error": True}
+            }), 500
         except Exception as e:
             total_time = time.time() - start_time
+            # Phase 2: Track failed requests for monitoring
+            performance_monitor.track_request(user_id, total_time)
             print(f"❌ Error in GPT call: {e} (after {total_time:.2f}s)")
-            categories_labels = []
-
-        return jsonify(categories_labels)
+            return jsonify({
+                "error": "Classification service temporarily unavailable",
+                "user_id": user_id,
+                "performance": {"response_time": total_time, "error": True}
+            }), 500
+    
+    # -------------------- Phase 2 Monitoring Routes --------------------
+    
+    @app.route("/health")
+    def health_check():
+        """
+        Phase 2: Health check endpoint with detailed performance metrics
+        """
+        # Déterminer si on est en mode développement
+        is_development = os.environ.get('FLASK_ENV') == 'development' or os.environ.get('PORT') is None
+        
+        if is_development:
+            # Mode développement - stats rapides pour éviter les blocages
+            perf_report = performance_monitor.get_performance_report(safe_mode=True)
+            cache_stats = gpt_cache.get_stats_fast()
+        else:
+            # Mode production - stats complètes
+            perf_report = performance_monitor.get_performance_report(safe_mode=False)
+            cache_stats = gpt_cache.get_stats(cleanup_expired=True)
+            
+        cleanup_stats = session_cleanup.get_cleanup_stats() if session_cleanup else {}
+        
+        return jsonify({
+            "status": perf_report["status"],
+            "timestamp": perf_report["timestamp"],
+            "performance": perf_report,
+            "cache": cache_stats,
+            "cleanup": cleanup_stats,
+            "active_sessions": len(user_filtered_books),
+            "version": "Phase 2 - Multi-user optimized"
+        })
+    
+    @app.route("/admin/cache/clear", methods=["POST"])
+    def clear_cache():
+        """
+        Phase 2: Clear GPT cache (admin function)
+        """
+        gpt_cache.cache.clear()
+        gpt_cache.reset_stats()
+        return jsonify({"message": "Cache cleared successfully"})
+    
+    @app.route("/admin/sessions/cleanup", methods=["POST"])
+    def force_cleanup():
+        """
+        Phase 2: Force cleanup of expired sessions (admin function)
+        """
+        if session_cleanup:
+            cleaned = session_cleanup.cleanup_expired_sessions()
+            return jsonify({
+                "message": f"Cleaned {cleaned} expired sessions",
+                "remaining_sessions": len(user_filtered_books)
+            })
+        return jsonify({"error": "Session cleanup not initialized"}), 500
     
     return app
 

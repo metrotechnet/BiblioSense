@@ -5,42 +5,64 @@ Contient les fonctions d'interaction avec OpenAI pour la classification et la de
 
 import json
 import os
+import time
 from openai import OpenAI
-from google.cloud import secretmanager
 
 
-def get_secret(secret_name, project_id=None):
+def get_catagories_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache=None):
     """
-    Récupère un secret depuis Google Secret Manager
+    Version cachée de get_catagories_with_gpt qui utilise le cache GPT
     
     Args:
-        secret_name (str): Nom du secret dans Secret Manager
-        project_id (str): ID du projet GCP (optionnel, utilisera le projet par défaut si non spécifié)
+        text (str): Texte de la requête utilisateur
+        taxonomy_data (dict): Données de taxonomie
+        openai_client: Client OpenAI
+        gpt_cache: Instance du cache GPT (optionnel)
     
     Returns:
-        str: Valeur du secret
+        dict: Catégories et description de la requête
     """
-    try:
-        # Créer le client Secret Manager
-        client = secretmanager.SecretManagerServiceClient()
-
-        if not project_id:
-            project_id = "BiblioSense"  # Nom de projet GCP valide (minuscules)
-
-        # Construire le nom de la ressource du secret
-        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    if gpt_cache is None:
+        # Fallback vers l'appel direct si pas de cache
+        return get_catagories_with_gpt(text, taxonomy_data, openai_client)
+    
+    # Essayer le cache d'abord
+    start_time = time.time()
+    categories = gpt_cache.get(text, taxonomy_data)
+    
+    if categories:
+        cache_time = time.time() - start_time
+        print(f"⚡ GPT response from cache: {cache_time:.3f}s")
+        return categories
+    else:
+        # Cache miss - appeler GPT et stocker le résultat
+        gpt_start = time.time()
+        categories = get_catagories_with_gpt(text, taxonomy_data, openai_client)
+        gpt_time = time.time() - gpt_start
         
-        # Récupérer le secret
-        response = client.access_secret_version(request={"name": name})
+        # Stocker dans le cache pour les requêtes futures
+        gpt_cache.set(text, taxonomy_data, categories)
+        print(f"⏱️  GPT categories classification (new): {gpt_time:.2f}s")
         
-        # Décoder et retourner la valeur
-        payload = response.payload.data.decode("UTF-8")
-        return json.loads(payload)['OPENAI_API_KEY']
+        return categories
 
-    except Exception as e:
-        print(f"⚠️  Erreur lors de la récupération du secret '{secret_name}': {e}")
-        print(f"🔄 Fallback vers les variables d'environnement...")
-        return os.getenv(secret_name.upper().replace('-', '_'))
+
+def create_cached_gpt_function(gpt_cache, openai_client, taxonomy_data):
+    """
+    Factory function pour créer une fonction GPT pré-configurée avec cache
+    
+    Args:
+        gpt_cache: Instance du cache GPT
+        openai_client: Client OpenAI
+        taxonomy_data: Données de taxonomie
+    
+    Returns:
+        function: Fonction pré-configurée qui ne nécessite que le texte
+    """
+    def cached_gpt_call(text):
+        return get_catagories_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache)
+    
+    return cached_gpt_call
 
 
 def get_catagories_with_gpt(text, taxonomy, openai_client):
