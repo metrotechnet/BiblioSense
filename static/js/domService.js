@@ -373,85 +373,99 @@ const domService = {
             img.alt = "Couverture";
             img.style.maxWidth = "100px";
             img.style.display = "none"; // Hide initially until loaded
-            // Handle image loading
-            img.onload = () => {
-                img.style.display = "block";
-                img.style.maxHeight = "150px"; // Set a max height for the image
-            }
-            // Handle image loading error - fallback to placeholder
-            img.onerror = () => {
-                img.style.display = "none";
-                const placeholder = this.createBookPlaceholder(book);
-                leftCol.appendChild(placeholder);
-            };
             
+            let imageLoaded = false;
+            
+            // Handle image loading success
+            img.onload = () => {
+                if (!imageLoaded) {
+                    imageLoaded = true;
+                    img.style.display = "block";
+                    img.style.maxHeight = "150px"; // Set a max height for the image
+                    this.displayBookDetails(book, item, leftCol);
+                }
+            }
+
+            // Add timeout to prevent long waits (100 milliseconds)
+            setTimeout(() => {
+                if (!imageLoaded) {
+                    imageLoaded = true;
+                    img.style.display = "none";
+                    const placeholder = this.createBookPlaceholder(book);
+                    leftCol.appendChild(placeholder);
+                    this.displayBookDetails(book, item, leftCol);
+                    console.log(`Image timeout for: ${book.couverture}`);
+                }
+            }, 100); // 100 millisecond timeout
+
             leftCol.appendChild(img);
         }
         else {
             // If no cover image, create a placeholder
             const placeholder = this.createBookPlaceholder(book);
             leftCol.appendChild(placeholder);
+            this.displayBookDetails(book,item,leftCol);
         }
-        setTimeout(() => {
-             // Author if available (placed after cover/placeholder)
-            if (book.auteur) {
-                const author = document.createElement("p");
-                author.innerHTML = `<strong>Auteur :</strong> ${book.auteur}`;
-                leftCol.appendChild(author);
-            }
 
-            // Description if available (placed after author)
-            if (book.description) {
-                const description = document.createElement("p");
-                description.innerHTML = `<strong>Description :</strong> ${book.description}`;
-                leftCol.appendChild(description);
-            }
-
-            item.appendChild(leftCol);
-                  
-            // Right column for additional fields
-            const rightCol = document.createElement("div");
-            rightCol.style.flex = "2";
-
-            // List of fields to display in the right column
-            const fields = [
-                { key: "categorie", label: "Catégorie" },
-                { key: "resume", label: "Résumé" },
-                { key: "editeur", label: "Éditeur" },
-                { key: "parution", label: "Parution" },
-                { key: "pages", label: "Pages" },
-                { key: "langue", label: "Langue" },
-                { key: "lien", label: "Lien" }
-            ];
-
-            // Render each field if available
-            fields.forEach(field => {
-                if (book[field.key]) {
-                    const p = document.createElement("p");
-                    if (field.key === "lien") {
-                        // Special handling for link field
-                        const link = document.createElement("a");
-                        link.href = book[field.key];
-                        link.textContent = "Voir sur pretnumerique.ca";
-                        link.target = "_blank";
-                        link.className = "btn btn-primary";
-                        rightCol.appendChild(link);
-                    } else {
-                        p.innerHTML = `<strong>${field.label} :</strong> ${book[field.key]}`;
-                        rightCol.appendChild(p);
-                    }
-                }
-            });
-
-            item.appendChild(rightCol);
-
-        }, 100);
-
- 
 
         return item;
     },
+    displayBookDetails(book, item, leftCol) {
+        // Left column for title, cover, author, and description
+        leftCol.style.flex = "1";
 
+        // Author if available (placed after cover/placeholder)
+        if (book.auteur) {
+            const author = document.createElement("p");
+            author.innerHTML = `<strong>Auteur :</strong> ${book.auteur}`;
+            leftCol.appendChild(author);
+        }
+
+        // Description if available (placed after author)
+        if (book.description) {
+            const description = document.createElement("p");
+            description.innerHTML = `<strong>Description :</strong> ${book.description}`;
+            leftCol.appendChild(description);
+        }
+
+        item.appendChild(leftCol);
+
+        // Right column for additional fields
+        const rightCol = document.createElement("div");
+        rightCol.style.flex = "2";
+
+        // List of fields to display in the right column
+        const fields = [
+            { key: "categorie", label: "Catégorie" },
+            { key: "resume", label: "Résumé" },
+            { key: "editeur", label: "Éditeur" },
+            { key: "parution", label: "Parution" },
+            { key: "pages", label: "Pages" },
+            { key: "langue", label: "Langue" },
+            { key: "lien", label: "Lien" }
+        ];
+
+        // Render each field if available
+        fields.forEach(field => {
+            if (book[field.key]) {
+                const p = document.createElement("p");
+                if (field.key === "lien") {
+                    // Special handling for link field
+                    const link = document.createElement("a");
+                    link.href = book[field.key];
+                    link.textContent = "Voir sur pretnumerique.ca";
+                    link.target = "_blank";
+                    link.className = "btn btn-primary";
+                    rightCol.appendChild(link);
+                } else {
+                    p.innerHTML = `<strong>${field.label} :</strong> ${book[field.key]}`;
+                    rightCol.appendChild(p);
+                }
+            }
+        });
+
+        item.appendChild(rightCol);
+    },
     /**
      * Create a book placeholder element with title and author name.
      * @param {object} book - The book object.
