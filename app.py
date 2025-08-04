@@ -109,6 +109,13 @@ def create_app():
         """
         Render the main graph visualization page.
         """
+        # Ensure user has a session from the very first page load
+        if 'user_id' not in session:
+            session['user_id'] = str(uuid.uuid4())
+            print(f"🆔 New session created: {session['user_id']}")
+        else:
+            print(f"🔄 Existing session: {session['user_id']}")
+            
         return render_template("index.html")
     
     # create a service that returns the number of books
@@ -127,9 +134,10 @@ def create_app():
         """
         global user_filtered_books
         
-        # Ensure user has a session
+        # Session should already exist from index route, but safety check
         if 'user_id' not in session:
             session['user_id'] = str(uuid.uuid4())
+            print(f"⚠️  Session created in session_info (unexpected): {session['user_id']}")
         
         user_id = session['user_id']
         
@@ -157,9 +165,10 @@ def create_app():
         """
         global books_data, user_filtered_books
         
-        # Ensure user has a session
+        # Session should already exist from index route, but safety check
         if 'user_id' not in session:
             session['user_id'] = str(uuid.uuid4())
+            print(f"⚠️  Session created in books_data_route (unexpected): {session['user_id']}")
         
         user_id = session['user_id']
         
@@ -224,10 +233,11 @@ def create_app():
         
         global taxonomy_data, books_data, openai_client, user_filtered_books
         
-        # Ensure user has a session
+        # Session should already exist from index route, but safety check
         if 'user_id' not in session:
             session['user_id'] = str(uuid.uuid4())
-        
+            print(f"⚠️  Session created in filter_categories (unexpected): {session['user_id']}")
+
         user_id = session['user_id']
         data = request.get_json()
         text = data.get("query", "")
