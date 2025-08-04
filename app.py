@@ -102,6 +102,7 @@ def init_openai_client():
         OPENAI_API_KEY = get_secret(DEFAULT_SECRET_ID, project_id=project_id)
         if OPENAI_API_KEY:
             print("✅ Clé OpenAI récupérée depuis Secret Manager")
+            print(OPENAI_API_KEY)
         else:
             raise ValueError("OPENAI_API_KEY non trouvée")
     except Exception as e:
