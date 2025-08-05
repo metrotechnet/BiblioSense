@@ -89,7 +89,7 @@ const domService = {
 
         // Show error if no books found
         if (!books || books.length === 0) {
-            this.showError("Aucun livre trouvé.", containerId);
+            this.showError("Désolé, aucun livre trouvé.", containerId);
             return;
         }
 
