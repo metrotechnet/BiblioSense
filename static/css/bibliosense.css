@@ -146,7 +146,7 @@ body {
 
   /* Mobile book list container */
   #book-list {
-    max-height: calc(100dvh - 320px) !important;
+    max-height: calc(100dvh - 200px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     padding-bottom: 5px !important;
