@@ -40,6 +40,7 @@ body {
 /* Search form layout - always vertical */
 #search-form form {
     flex-direction: column !important;
+    width: 75% !important;
 }
 
 /* Search form input container - horizontal on desktop */
@@ -54,6 +55,11 @@ body {
     .search-input-container {
         flex-direction: column !important;
         gap: 10px !important;
+    }
+    
+    /* Form full width on mobile */
+    #search-form form {
+        width: 100% !important;
     }
 }
 

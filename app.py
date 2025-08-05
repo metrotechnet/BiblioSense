@@ -102,7 +102,6 @@ def init_openai_client():
         OPENAI_API_KEY = get_secret(DEFAULT_SECRET_ID, project_id=project_id)
         if OPENAI_API_KEY:
             print("✅ Clé OpenAI récupérée depuis Secret Manager")
-            print(OPENAI_API_KEY)
         else:
             raise ValueError("OPENAI_API_KEY non trouvée")
     except Exception as e:
@@ -140,7 +139,7 @@ def create_app():
     global cached_gpt_classifier
     cached_gpt_classifier = create_cached_gpt_function(gpt_cache, openai_client, taxonomy_data)
     
-    print("✅ Phase 2 optimizations initialized: Performance monitoring, GPT caching, Session cleanup")
+    print("✅ Optimizations initialized: Performance monitoring, GPT caching, Session cleanup")
     
     # -------------------- Flask Routes --------------------
 
@@ -413,7 +412,7 @@ def create_app():
                 total_score = (title_author_score * 100) + (other_keyword_score * 10) + taxonomy_score
                 
                 # Only add books with positive scores
-                if total_score > 0:
+                if total_score > 1:
                     # Use dict literal instead of copy() for better performance
                     scored_books.append({
                         **book,
@@ -422,7 +421,10 @@ def create_app():
                         "other_keyword_matches": other_keyword_score,
                         "taxonomy_matches": taxonomy_score
                     })
-            
+                # exit if we have more than 1000 books
+                if len(scored_books) > 1000:
+                    print(f"⚠️  Too many books matched ({len(scored_books)}), stopping early")
+                    break
             # Sort by descending score (title/author matches will be at top due to highest weight)
             filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
             
@@ -575,7 +577,7 @@ if __name__ == "__main__":
     
     if is_local:
         print("🔧 Running in LOCAL development mode")
-        # Use Flask's development server with debug mode but without reloader
+        # Use Flask's development server with debug mode and reloader enabled
         app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
     else:
         print("🚀 Running in PRODUCTION mode (Cloud Run)")

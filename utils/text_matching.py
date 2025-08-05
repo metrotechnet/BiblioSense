@@ -201,11 +201,23 @@ def smart_keyword_match(query_value, book_field, field_name=""):
     # For author fields, use sophisticated author matching
     if field_name == "auteur" or "author" in field_name.lower():
         return author_similarity_score(query_value, book_field)
-    
-    # For other fields, use simpler text matching
-    if query_lower in book_lower:
-        return 0.8
-    
+
+    # For page counts, interpret ranges. if query_value is `plus que` check if pages is more. if query_value is `moins que` check if pages is less.
+    if field_name.lower() in ["pages", "page count", "nombre de pages"]:
+        try:
+            query_pages = int(re.sub(r'\D', '', query_value))
+            book_pages = int(re.sub(r'\D', '', book_field))
+            if "plus" in query_value.lower() and book_pages >= query_pages:
+                return 1.0
+            elif "moins" in query_value.lower() and book_pages <= query_pages:
+                return 1.0
+            elif abs(query_pages - book_pages) <= 10:
+                return 1.0
+            else:
+                return 0.0
+        except ValueError:
+            return 0.0
+
     # Word-based matching
     query_words = set(query_lower.split())
     book_words = set(book_lower.split())
