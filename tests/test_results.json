@@ -1,0 +1,187 @@
+{
+  "timestamp": "2025-07-30 19:36:16",
+  "total_tests": 20,
+  "successful_tests": 20,
+  "results": [
+    {
+      "id": 1,
+      "category": "genre_fiction",
+      "query": "Je cherche des romans de science-fiction",
+      "status": "success",
+      "books_found": 35,
+      "description": "Les livres sont classés dans la catégorie principale de la Fiction, qui comprend notamment le genre de la Science-fiction.",
+      "response_time": 6.278077
+    },
+    {
+      "id": 2,
+      "category": "author_search",
+      "query": "Livres de Victor Hugo",
+      "status": "success",
+      "books_found": 952,
+      "description": "Les ouvrages se répartissent principalement entre la fiction, comprenant des récits historiques et des drames ou littératures générales, et la non-fiction, avec des biographies et mémoires. Les thèmes abordés touchent à des questions de société telles que la justice sociale, le pouvoir et la guerre, ainsi qu'aux relations humaines comme l'amour et la famille. Des réflexions philosophiques et métaphysiques sont également présentes, notamment sur le sens de la vie et la religion. Ces livres s'adressent à un public adulte et adoptent une structure narrative classique, avec un point de vue omniscient et un déroulement linéaire de l'histoire. Les personnages principaux peuvent être des héros solitaires ou appartenir à un groupe, tandis que les relations dominantes explorent la romance et la rivalité.",
+      "response_time": 8.684809
+    },
+    {
+      "id": 3,
+      "category": "theme_search",
+      "query": "Livres sur l'intelligence artificielle",
+      "status": "success",
+      "books_found": 52,
+      "description": "Les livres sont classés dans la catégorie Non-fiction, plus précisément dans le domaine des sciences et technologies. Les thèmes principaux abordés concernent la technologie, avec un intérêt particulier pour l'intelligence artificielle.",
+      "response_time": 4.551103
+    },
+    {
+      "id": 4,
+      "category": "language_search",
+      "query": "Romans français contemporains",
+      "status": "success",
+      "books_found": 996,
+      "description": "Les livres appartiennent au genre littéraire de la fiction, plus particulièrement au drame et à la littérature générale. Ils sont destinés à un public adulte.",
+      "response_time": 4.066439
+    },
+    {
+      "id": 5,
+      "category": "non_fiction",
+      "query": "Je veux des livres de développement personnel",
+      "status": "success",
+      "books_found": 66,
+      "description": "Les livres sont classés selon leur genre littéraire, avec une catégorie principale appelée Non-fiction. Parmi cette catégorie, on trouve notamment le développement personnel.",
+      "response_time": 3.960303
+    },
+    {
+      "id": 6,
+      "category": "specific_title",
+      "query": "Le Petit Prince",
+      "status": "success",
+      "books_found": 981,
+      "description": "Les ouvrages appartiennent au genre de la fiction, plus précisément au drame et à la littérature générale. Ils explorent des thèmes profonds comme le sens de la vie et la conscience, ainsi que les relations humaines telles que l’amitié, l’amour et la famille. Les récits mettent également en avant des épopées et des quêtes, avec des voyages et des transformations personnelles. Ces livres s’adressent à un public jeune adulte ainsi qu’à un public adulte. La narration est réalisée par un narrateur unique, avec une temporalité linéaire, dans un style à la fois classique et poétique. Les personnages principaux sont souvent des héros solitaires, et les relations dominantes tournent autour de l’amour et d’une quête collective.",
+      "response_time": 9.452699
+    },
+    {
+      "id": 7,
+      "category": "complex_query",
+      "query": "Roman policier français publié après 2020",
+      "status": "success",
+      "books_found": 991,
+      "description": "Les livres sont classés dans le genre littéraire de la fiction, plus précisément dans le sous-genre thriller ou policier. Ils sont destinés à un public adulte.",
+      "response_time": 4.226583
+    },
+    {
+      "id": 8,
+      "category": "mood_based",
+      "query": "Je veux quelque chose de léger et drôle",
+      "status": "success",
+      "books_found": 943,
+      "description": "Les livres appartiennent au genre littéraire de la fiction, incluant des œuvres de drame et de romance. Ils sont destinés principalement à un public jeunesse ou young adult. Le style d'écriture est à la fois classique et poétique, offrant une lecture à la fois traditionnelle et esthétique.",
+      "response_time": 5.360882
+    },
+    {
+      "id": 9,
+      "category": "academic",
+      "query": "Manuels de mathématiques niveau lycée",
+      "status": "success",
+      "books_found": 210,
+      "description": "Les livres appartiennent au genre de la non-fiction, plus particulièrement dans le domaine des sciences et des technologies. Ils sont destinés à un public cherchant un contenu de type documentaire ou pédagogique.",
+      "response_time": 4.600495
+    },
+    {
+      "id": 10,
+      "category": "biography",
+      "query": "Biographies d'entrepreneurs célèbres",
+      "status": "success",
+      "books_found": 59,
+      "description": "Les livres sont classés dans la catégorie Non-fiction, qui comprend notamment les biographies et les mémoires.",
+      "response_time": 4.085146
+    },
+    {
+      "id": 11,
+      "category": "cookbook",
+      "query": "Livre de cuisine végétarienne de moins de 300 pages",
+      "status": "success",
+      "books_found": 242,
+      "description": "Les livres proposés appartiennent au genre de la non-fiction, notamment des essais portant sur la philosophie, la politique et la société. Ils sont destinés à un public recherchant des ouvrages à caractère documentaire et pédagogique.",
+      "response_time": 4.35605
+    },
+    {
+      "id": 12,
+      "category": "travel",
+      "query": "Guides de voyage en Europe",
+      "status": "success",
+      "books_found": 170,
+      "description": "Les livres appartiennent au genre Non-fiction, plus précisément dans la catégorie Voyage et Exploration. Les thèmes principaux abordés sont les épopées et les quêtes, avec un accent particulier sur le voyage.",
+      "response_time": 5.813975
+    },
+    {
+      "id": 13,
+      "category": "philosophy",
+      "query": "Ouvrages de philosophie moderne",
+      "status": "success",
+      "books_found": 149,
+      "description": "Les livres sont principalement classés dans la catégorie de la non-fiction, avec un accent particulier sur les essais traitant de philosophie, de politique et de société. Les thèmes abordés incluent des questions profondes comme le sens de la vie, la religion et la conscience.",
+      "response_time": 4.754795
+    },
+    {
+      "id": 14,
+      "category": "history",
+      "query": "Livres sur l'histoire de France",
+      "status": "success",
+      "books_found": 111,
+      "description": "Les livres sont classés selon le genre littéraire, avec une catégorie principale appelée Fiction. Parmi les sous-genres de la fiction, on trouve notamment le genre historique.",
+      "response_time": 4.545779
+    },
+    {
+      "id": 15,
+      "category": "fantasy",
+      "query": "Romans de fantasy avec des dragons",
+      "status": "success",
+      "books_found": 612,
+      "description": "Les ouvrages appartiennent au genre littéraire de la fiction, plus précisément à la fantasy. Les thèmes principaux abordés concernent les épopées et les quêtes, avec des éléments tels que le voyage, la survie, et la transformation personnelle.",
+      "response_time": 4.706189
+    },
+    {
+      "id": 16,
+      "category": "short_books",
+      "query": "Livres courts de moins de 200 pages",
+      "status": "success",
+      "books_found": 218,
+      "description": "Les contenus sont destinés à différents types de public et se présentent sous deux formats principaux : documentaire ou pédagogique, ainsi que nouvelles ou anthologies.",
+      "response_time": 3.810875
+    },
+    {
+      "id": 17,
+      "category": "recent_books",
+      "query": "Nouveautés de 2024",
+      "status": "success",
+      "books_found": 999,
+      "description": "Les ouvrages sont destinés à différents types de lecteurs et se présentent sous plusieurs formats. Ils s'adressent aux adultes ainsi qu'aux jeunes adultes. On y trouve également des documents à vocation pédagogique ou documentaire, des bandes dessinées et romans graphiques, ainsi que des recueils de nouvelles ou d'anthologies.",
+      "response_time": 5.11067
+    },
+    {
+      "id": 18,
+      "category": "mystery",
+      "query": "Quelque chose de mystérieux et intriguant",
+      "status": "success",
+      "books_found": 410,
+      "description": "Les livres appartiennent au genre de la fiction, plus précisément au thriller ou policier. Les thèmes abordés portent sur des aspects de la société, notamment le pouvoir, ainsi que sur les relations humaines, en particulier la trahison.",
+      "response_time": 4.808127
+    },
+    {
+      "id": 19,
+      "category": "multilingual",
+      "query": "Livres bilingues français-anglais",
+      "status": "success",
+      "books_found": 207,
+      "description": "Le public visé est destiné à des contenus au format documentaire ou pédagogique.",
+      "response_time": 4.225224
+    },
+    {
+      "id": 20,
+      "category": "art",
+      "query": "Livres sur l'art moderne et la peinture",
+      "status": "success",
+      "books_found": 55,
+      "description": "Les livres sont classés selon leur genre littéraire. Parmi eux, on trouve la non-fiction, qui comprend des ouvrages liés aux arts et à la culture.",
+      "response_time": 3.890473
+    }
+  ]
+}

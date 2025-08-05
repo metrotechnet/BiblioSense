@@ -127,9 +127,9 @@ body {
   }
   
   .mobile-container {
-    height: calc(100vh - 200px) !important;
+    height: calc(100vh - 220px) !important;
     /* Fallback for browsers that don't support dvh */
-    height: calc(100dvh - 200px) !important;
+    height: calc(100dvh - 220px) !important;
     padding: 15px 10px !important;
     overflow-y: auto !important;
     /* Ensure smooth scrolling on mobile */
@@ -146,7 +146,7 @@ body {
 
   /* Mobile book list container */
   #book-list {
-    max-height: calc(100dvh - 200px) !important;
+    max-height: calc(100dvh - 220px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     padding-bottom: 5px !important;

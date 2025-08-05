@@ -1,8 +1,5 @@
 .env
 env-config.json
-create-secret.sh
-create-secret.ps1
-test_results.json
 __pycache__/
 *.pyc
 *.pyo
