@@ -7,4 +7,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-utils/classifyBooks.py
+dbase/sessions.json
+dbase/sessions_backup.json
+dbase/old/*

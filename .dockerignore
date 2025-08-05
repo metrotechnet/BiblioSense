@@ -19,3 +19,5 @@ __pycache__
 node_modules
 .DS_Store
 Thumbs.db
+
+# Exclude specific files and directories
