@@ -1,10 +1,10 @@
 {
   "active_sessions": {
     "0639c1f7-af79-4a3c-bcfe-0b7c1a2b0678": {
-      "book_count": 7979,
-      "last_updated": 1754357756.4564772
+      "book_count": 7384,
+      "last_updated": 1754358836.5056038
     }
   },
   "total_sessions": 1,
-  "backup_time": 1754357756.4564772
+  "backup_time": 1754358836.5056038
 }

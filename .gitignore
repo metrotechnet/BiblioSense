@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-/dbase/sessions.json
-/dbase/sessions_backup.json
-/dbase/old/*
+
+dbase/old/*
+dbase/sessions_backup.json
+dbase/sessions.json
