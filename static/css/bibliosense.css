@@ -149,7 +149,7 @@ body {
     max-height: calc(100dvh - 320px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding-bottom: 20px !important;
+    padding-bottom: 5px !important;
   }
 
   /* iOS Safari specific adjustments */
@@ -159,7 +159,7 @@ body {
     }
     
     #book-list {
-      max-height: calc(100vh - 360px) !important;
+      max-height: calc(100vh - 330px) !important;
     }
   }
 
