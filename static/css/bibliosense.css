@@ -127,8 +127,13 @@ body {
   }
   
   .mobile-container {
-    height: calc(100vh - 200px) !important;
+    height: calc(100vh - 260px) !important;
+    /* Fallback for browsers that don't support dvh */
+    height: calc(100dvh - 260px) !important;
     padding: 15px 10px !important;
+    overflow-y: auto !important;
+    /* Ensure smooth scrolling on mobile */
+    -webkit-overflow-scrolling: touch !important;
   }
 
   /* Mobile book list styling */
@@ -137,6 +142,25 @@ body {
     border-radius: 8px !important;
     margin-bottom: 15px !important;
     padding: 15px !important;
+  }
+
+  /* Mobile book list container */
+  #book-list {
+    max-height: calc(100dvh - 320px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 20px !important;
+  }
+
+  /* iOS Safari specific adjustments */
+  @supports (-webkit-touch-callout: none) {
+    .mobile-container {
+      height: calc(100vh - 300px) !important;
+    }
+    
+    #book-list {
+      max-height: calc(100vh - 360px) !important;
+    }
   }
 
   /* Mobile book layout - main info always visible */
