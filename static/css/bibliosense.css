@@ -127,9 +127,9 @@ body {
   }
   
   .mobile-container {
-    height: calc(100vh - 260px) !important;
+    height: calc(100vh - 200px) !important;
     /* Fallback for browsers that don't support dvh */
-    height: calc(100dvh - 260px) !important;
+    height: calc(100dvh - 200px) !important;
     padding: 15px 10px !important;
     overflow-y: auto !important;
     /* Ensure smooth scrolling on mobile */
@@ -159,7 +159,7 @@ body {
     }
     
     #book-list {
-      max-height: calc(100vh - 300px) !important;
+      max-height: calc(100vh - 360px) !important;
     }
   }
 
