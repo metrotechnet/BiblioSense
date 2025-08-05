@@ -422,9 +422,9 @@ def create_app():
                         "taxonomy_matches": taxonomy_score
                     })
                 # exit if we have more than 1000 books
-                if len(scored_books) > 1000:
-                    print(f"⚠️  Too many books matched ({len(scored_books)}), stopping early")
-                    break
+                # if len(scored_books) >= 1000:
+                #     print(f"⚠️  Too many books matched ({len(scored_books)}), stopping early")
+                #     break
             # Sort by descending score (title/author matches will be at top due to highest weight)
             filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
             

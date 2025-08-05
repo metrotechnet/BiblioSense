@@ -90,7 +90,7 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
         ### Champs disponibles pour les mots-clés :
         - titre : titre du livre
         - auteur : nom(s) d’auteur(s)
-        - resume : résumé ou description (obligatoire)
+        - resume : résumé ou description du livre (important)
         - editeur : éditeur
         - langue : langue
         - categorie : catégorie ou domaine
