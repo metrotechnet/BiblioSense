@@ -38,20 +38,39 @@ class PerformanceMonitor:
             self.active_users.add(user_id)
             self.user_last_activity[user_id] = time.time()
     
-    def cleanup_inactive_users(self, timeout_seconds=300):  # 5 minutes
-        """Nettoie les utilisateurs inactifs"""
-        current_time = time.time()
-        with self.lock:
-            inactive_users = [
-                user_id for user_id, last_activity in self.user_last_activity.items()
-                if current_time - last_activity > timeout_seconds
-            ]
-            
-            for user_id in inactive_users:
-                self.active_users.discard(user_id)
-                self.user_last_activity.pop(user_id, None)
-                
-        return len(inactive_users)
+    def cleanup_inactive_users_safe(self, timeout_seconds=300):
+        """Version ultra-sécurisée pour éviter tout blocage"""
+        try:
+            # Essayer d'acquérir le lock avec timeout
+            if self.lock.acquire(timeout=0.1):  # 100ms max
+                try:
+                    current_time = time.time()
+                    # Limite le nombre d'utilisateurs à nettoyer par batch
+                    inactive_count = 0
+                    users_to_remove = []
+                    
+                    # Processus par petits lots pour éviter les blocages
+                    for user_id, last_activity in list(self.user_last_activity.items())[:50]:
+                        if current_time - last_activity > timeout_seconds:
+                            users_to_remove.append(user_id)
+                            inactive_count += 1
+                        if inactive_count >= 10:  # Max 10 par batch
+                            break
+                    
+                    # Nettoyage rapide
+                    for user_id in users_to_remove:
+                        self.active_users.discard(user_id)
+                        self.user_last_activity.pop(user_id, None)
+                        
+                    return inactive_count
+                finally:
+                    self.lock.release()
+            else:
+                # Si on ne peut pas acquérir le lock, on abandonne silencieusement
+                return 0
+        except Exception as e:
+            print(f"⚠️ Safe cleanup error: {e}")
+            return 0
     
     def get_stats_safe(self):
         """Version simplifiée pour le développement/debug qui ne bloque pas"""
@@ -105,9 +124,9 @@ class PerformanceMonitor:
                 if self.response_times else 0
             )
             
-            # Nettoyer les utilisateurs inactifs (seulement si pas en mode debug)
+            # Nettoyer les utilisateurs inactifs (version sécurisée)
             try:
-                self.cleanup_inactive_users()
+                self.cleanup_inactive_users_safe()
             except Exception as e:
                 print(f"⚠️  Cleanup warning: {e}")
             

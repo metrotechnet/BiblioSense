@@ -2,7 +2,8 @@ import pandas as pd
 from openai import OpenAI
 import json
 import os
-from gpt_services import  get_secret
+import time
+from utils.config import  get_secret
 
 # Configure your OpenAI API key
 #

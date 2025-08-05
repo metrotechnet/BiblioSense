@@ -8,6 +8,86 @@ import os
 import time
 from openai import OpenAI
 
+# -------------------- Query Logging Functions --------------------
+
+def log_query(user_id, query_text, results_count, response_time, gpt_categories=None, query_log_file="dbase/query_log.json"):
+    """
+    Log search queries to a file for analysis
+    
+    Args:
+        user_id (str): User session ID
+        query_text (str): The search query
+        results_count (int): Number of results found
+        response_time (float): Time taken to process the query
+        gpt_categories (dict): GPT classification results (optional)
+        query_log_file (str): Path to the log file (default: "dbase/query_log.json")
+    """
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(query_log_file), exist_ok=True)
+        
+        # Load existing logs
+        logs = []
+        if os.path.exists(query_log_file):
+            try:
+                with open(query_log_file, 'r', encoding='utf-8') as f:
+                    logs = json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError):
+                logs = []
+        
+        # Create new log entry
+        log_entry = {
+            "timestamp": time.time(),
+            "datetime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "user_id": user_id,
+            "query": query_text,
+            "results_count": results_count,
+            "response_time": response_time,
+            "success": results_count > 0
+        }
+        
+        # Add GPT categories if provided (but keep it lightweight)
+        if gpt_categories:
+            log_entry["has_gpt_classification"] = True
+            log_entry["description"] = gpt_categories.get("Description", "")[:200]  # Limit description length
+            
+            # Add mots-clés (keywords) information
+            if "Mots-clés" in gpt_categories:
+                mots_cles = gpt_categories["Mots-clés"]
+                log_entry["mots_cles"] = {
+                    "fields_used": list(mots_cles.keys()),
+                    "total_keywords": sum(len(keywords) if isinstance(keywords, list) else 1 for keywords in mots_cles.values()),
+                    "keywords_by_field": {field: keywords if isinstance(keywords, list) else [keywords] for field, keywords in mots_cles.items()}
+                }
+            
+            # Add taxonomie information
+            if "Taxonomie" in gpt_categories:
+                taxonomie = gpt_categories["Taxonomie"]
+                log_entry["taxonomie"] = {
+                    "categories_used": list(taxonomie.keys()),
+                    "total_categories": len(taxonomie),
+                    "taxonomy_structure": taxonomie  # Store the full taxonomy structure for analysis
+                }
+        else:
+            log_entry["has_gpt_classification"] = False
+        
+        # Add to logs
+        logs.append(log_entry)
+        
+        # Keep only last 1000 queries to prevent file from growing too large
+        if len(logs) > 1000:
+            logs = logs[-1000:]
+        
+        # Save logs
+        with open(query_log_file, 'w', encoding='utf-8') as f:
+            json.dump(logs, f, indent=2, ensure_ascii=False)
+            
+    except Exception as e:
+        print(f"⚠️  Error logging query: {e}")
+        # Don't raise exception - logging should not break the main functionality
+
+# -------------------- GPT Service Functions --------------------
+
 
 def get_catagories_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache=None):
     """

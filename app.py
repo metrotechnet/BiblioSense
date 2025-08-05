@@ -6,7 +6,7 @@ from waitress import serve
 import os
 import time
 import uuid
-from utils.gpt_services import get_catagories_with_gpt, get_catagories_with_gpt_cached, create_cached_gpt_function
+from utils.gpt_services import get_catagories_with_gpt, get_catagories_with_gpt_cached, create_cached_gpt_function, log_query
 from utils.text_matching import smart_keyword_match
 from utils.performance_monitor import PerformanceMonitor
 from utils.gpt_cache import GPTCache
@@ -47,6 +47,7 @@ app_config = get_config()
 # Paths to JSON files for taxonomy and book data
 BOOK_DATABASE_FILE = app_config.BOOK_DATABASE_FILE
 TAXONOMY_FILE = app_config.TAXONOMY_FILE
+QUERY_LOG_FILE = "dbase/query_log.json"
 
 # Configuration de base
 DEFAULT_SECRET_ID = app_config.DEFAULT_SECRET_ID
@@ -421,10 +422,7 @@ def create_app():
                         "other_keyword_matches": other_keyword_score,
                         "taxonomy_matches": taxonomy_score
                     })
-                # exit if we have more than 1000 books
-                # if len(scored_books) >= 1000:
-                #     print(f"⚠️  Too many books matched ({len(scored_books)}), stopping early")
-                #     break
+
             # Sort by descending score (title/author matches will be at top due to highest weight)
             filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
             
@@ -466,10 +464,16 @@ def create_app():
 
             # If no books found
             if not filtered_books:
+                # Log query with 0 results
+                log_query(user_id, text, 0, total_time, categories)
+                
                 return jsonify({
                     "description": "Aucun livre trouvé pour cette requête.",
                     "user_id": user_id
                 })
+
+            # Log successful query
+            log_query(user_id, text, len(filtered_books), total_time, categories)
 
             # Return length of filtered books and description with performance metrics
             return jsonify({
@@ -487,6 +491,8 @@ def create_app():
 
         except json.JSONDecodeError as e:
             total_time = time.time() - start_time
+            # Log failed query
+            log_query(user_id, text, -1, total_time)  # -1 indicates error
             # Phase 2: Track failed requests for monitoring
             performance_monitor.track_request(user_id, total_time)
             print(f"❌ JSON Decode Error: {e} (after {total_time:.2f}s)")
@@ -497,6 +503,8 @@ def create_app():
             }), 500
         except Exception as e:
             total_time = time.time() - start_time
+            # Log failed query
+            log_query(user_id, text, -1, total_time)  # -1 indicates error
             # Phase 2: Track failed requests for monitoring
             performance_monitor.track_request(user_id, total_time)
             print(f"❌ Error in GPT call: {e} (after {total_time:.2f}s)")
@@ -558,6 +566,35 @@ def create_app():
                 "remaining_sessions": len(user_filtered_books)
             })
         return jsonify({"error": "Session cleanup not initialized"}), 500
+    
+    # Add a service to get logs
+    @app.route("/admin/logs", methods=["GET"])
+    def get_logs():
+        """
+        Phase 2: Get query logs (admin function)
+        """
+        try:
+            with open("dbase/query_log.json", "r", encoding="utf-8") as f:
+                logs = json.load(f)
+            return jsonify(logs)
+        except Exception as e:
+            print(f"⚠️  Error retrieving logs: {e}")
+            return jsonify({"error": "Failed to retrieve logs"}), 500
+        
+    @app.route("/admin/logs/clear", methods=["POST"])
+    def clear_logs():   
+        """
+        Phase 2: Clear query logs (admin function)
+        """
+        try:
+            with open("dbase/query_log.json", "w", encoding="utf-8") as f:
+                json.dump([], f)  # Clear the log file
+            return jsonify({"message": "Logs cleared successfully"})
+        except Exception as e:
+            print(f"⚠️  Error clearing logs: {e}")
+            return jsonify({"error": "Failed to clear logs"}), 500
+    
+    
     
     return app
 

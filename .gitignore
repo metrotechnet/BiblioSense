@@ -8,3 +8,4 @@ __pycache__/
 dbase/old/*
 dbase/sessions_backup.json
 dbase/sessions.json
+dbase/query_log.json
