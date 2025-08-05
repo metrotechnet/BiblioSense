@@ -22,7 +22,7 @@
 // Wait for the DOM to be fully loaded before running scripts
 document.addEventListener("DOMContentLoaded", async function () {
     try {
-        // Show welcome instructions instead of loading books immediately
+        // Show welcome instructions by default (already in HTML)
         showWelcomeInstructions();
     } catch (error) {
         domService.showError("Erreur lors du chargement de l'application. Veuillez réessayer plus tard.");
@@ -40,6 +40,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!query) return;
 
             try {
+                // Hide welcome instructions and show book list
+                hideWelcomeInstructions();
+                
                 // Start spinner to indicate loading state
                 domService.startSpinner();
 
@@ -89,41 +92,30 @@ function resetBookList() {
  * Show welcome instructions when the page loads for the first time.
  */
 function showWelcomeInstructions() {
-    const container = document.getElementById("book-list");
-    if (!container) return;
+    const welcomeDiv = document.getElementById("welcome-instructions");
+    const bookList = document.getElementById("book-list");
+    
+    if (welcomeDiv) {
+        welcomeDiv.style.display = "block";
+    }
+    if (bookList) {
+        bookList.style.display = "none";
+    }
+}
 
-    container.innerHTML = `
-        <div class="welcome-instructions" style="text-align: center; padding: 20px 20px; color: #555;">
-            <div style="font-size: 2rem; color: #007bff; margin-bottom: 20px;">
-                <i class="bi bi-book"></i>
-            </div>
-            <h3 style="color: #333; margin-bottom: 20px;">Bienvenue sur BiblioSense !</h3>
-            <p style="font-size: 1.1rem; margin-bottom: 15px; line-height: 1.6;">
-                Votre assistant intelligent pour découvrir des livres que vous allez adorer.
-            </p>
-            <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #007bff;">
-                <h4 style="color: #007bff; margin-bottom: 15px;">
-                    <i class="bi bi-lightbulb"></i> Comment utiliser BiblioSense :
-                </h4>
-                <div style="text-align: left; max-width: 500px; margin: 0 auto;">
-                    <p style="margin-bottom: 10px;">
-                        <strong>✨ Décrivez vos goûts :</strong> Entrez un sujet, un auteur ou un titre que vous aimez
-                    </p>
-                    <p style="margin-bottom: 10px;">
-                        <strong>🤖 L'IA analyse :</strong> Notre assistant comprend vos préférences
-                    </p>
-                    <p style="margin-bottom: 10px;">
-                        <strong>📚 Découvrez :</strong> Recevez des recommandations personnalisées
-                    </p>
-                </div>
-            </div>
-            <div style="margin-top: 30px;">
-                <p style="color: #666; font-style: italic;">
-                    Commencez par faire une recherche ci-dessus pour découvrir des livres recommandés !
-                </p>
-            </div>
-        </div>
-    `;
+/**
+ * Hide welcome instructions and show book list.
+ */
+function hideWelcomeInstructions() {
+    const welcomeDiv = document.getElementById("welcome-instructions");
+    const bookList = document.getElementById("book-list");
+    
+    if (welcomeDiv) {
+        welcomeDiv.style.display = "none";
+    }
+    if (bookList) {
+        bookList.style.display = "block";
+    }
 }
 
 // Handle window resize to update book display format

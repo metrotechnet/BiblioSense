@@ -43,7 +43,40 @@
 
 <!-- Book list container -->
 <div id="list-container" class="mobile-container" style="display:block; width:100%; height:calc(100vh - 250px); overflow-y:auto; background:#fff; padding:24px 18px 18px 18px;">
-  <ul id="book-list" class="list-group"></ul>
+  <!-- Welcome instructions (shown by default) -->
+  <div id="welcome-instructions" class="welcome-instructions" style="text-align: center; padding: 20px 20px; color: #555;">
+    <div style="font-size: 2rem; color: #007bff; margin-bottom: 20px;">
+      <i class="bi bi-book"></i>
+    </div>
+    <h3 style="color: #333; margin-bottom: 20px;">Bienvenue sur BiblioSense !</h3>
+    <p style="font-size: 1.1rem; margin-bottom: 15px; line-height: 1.6;">
+      Votre assistant intelligent pour découvrir des livres que selon vos goûts.
+    </p>
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #007bff;">
+      <h4 style="color: #007bff; margin-bottom: 15px;">
+        <i class="bi bi-lightbulb"></i> Comment utiliser BiblioSense :
+      </h4>
+      <div style="text-align: left; max-width: 500px; margin: 0 auto;">
+        <p style="margin-bottom: 10px;">
+          <strong>✨ Décrivez vos goûts :</strong> Entrez un sujet, un auteur ou un titre que vous aimez
+        </p>
+        <p style="margin-bottom: 10px;">
+          <strong>🤖 L'IA analyse :</strong> Notre assistant comprend vos préférences
+        </p>
+        <p style="margin-bottom: 10px;">
+          <strong>📚 Découvrez :</strong> Recevez des recommandations personnalisées
+        </p>
+      </div>
+    </div>
+    <div style="margin-top: 30px;">
+      <p style="color: #666; font-style: italic;">
+        Commencez par faire une recherche ci-dessus pour découvrir des livres recommandés !
+      </p>
+    </div>
+  </div>
+  
+  <!-- Book list (initially hidden) -->
+  <ul id="book-list" class="list-group" style="display: none;"></ul>
 </div>
 
 <!-- Include Refactored JavaScript Modules -->
