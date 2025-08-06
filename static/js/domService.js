@@ -87,11 +87,7 @@ const domService = {
         // Store books data for responsive re-rendering
         window.currentBooksData = books;
 
-        // Show error if no books found
-        if (!books || books.length === 0) {
-            this.showError("Désolé, aucun livre trouvé.", containerId);
-            return;
-        }
+
 
         // Stop any previous rendering process
         this.stopRenderingProcess();
@@ -104,7 +100,7 @@ const domService = {
 
         // Clear container and create main content area
         container.innerHTML = "";
-                // If a message is provided, display it
+        // If a message is provided, display it
         if (message) {
             container.innerHTML = `<div class="alert alert-success" role="alert">${message}</div>`;
         } 
@@ -112,6 +108,11 @@ const domService = {
         contentArea.id = containerId + "-content";
         container.appendChild(contentArea);
 
+        // Show error if no books found
+        if (!books || books.length === 0) {
+            container.innerHTML += `<div class="alert alert-danger" role="alert">Désolé, aucun livre trouvé.</div>`;
+            return;
+        }
         // Set rendering flag to true
         this._isRendering = true;
         this._renderingTimeoutId = null;

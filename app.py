@@ -413,7 +413,7 @@ def create_app():
                 total_score = (title_author_score * 100) + (other_keyword_score * 10) + taxonomy_score
                 
                 # Only add books with positive scores
-                if total_score > 1:
+                if total_score > 10:
                     # Use dict literal instead of copy() for better performance
                     scored_books.append({
                         **book,
@@ -425,7 +425,9 @@ def create_app():
 
             # Sort by descending score (title/author matches will be at top due to highest weight)
             filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
-            
+            # print first 100 title with score for debugging
+            for b in filtered_books[:10]:
+                print(f" - {b.get('titre', 'Unknown Title')} (Score: {b['score']}, Title/Author: {b.get('title_author_matches',0)}, Other Keywords: {b.get('other_keyword_matches',0)}, Taxonomy: {b.get('taxonomy_matches',0)})")
             # Store filtered results for this user session
             user_filtered_books[user_id] = filtered_books
             
@@ -462,18 +464,44 @@ def create_app():
             print(f"   - Other keyword matches: {other_keyword_matches} (medium priority)")
             print(f"   - Taxonomy only: {taxonomy_only} (lowest priority)")
 
+            # Calculate score statistics for logging
+            if filtered_books:
+                scores = [book["score"] for book in filtered_books]
+                title_author_scores = [book.get("title_author_matches", 0) for book in filtered_books]
+                other_keyword_scores = [book.get("other_keyword_matches", 0) for book in filtered_books]
+                taxonomy_scores = [book.get("taxonomy_matches", 0) for book in filtered_books]
+                
+                score_stats = {
+                    "total_scores": {
+                        "max": max(scores),
+                        "min": min(scores),
+                        "avg": sum(scores) / len(scores)
+                    },
+                    "title_author_matches": title_author_matches,
+                    "other_keyword_matches": other_keyword_matches,
+                    "taxonomy_only_matches": taxonomy_only,
+                    "match_breakdown": {
+                        "title_author_avg": sum(title_author_scores) / len(title_author_scores) if title_author_scores else 0,
+                        "other_keyword_avg": sum(other_keyword_scores) / len(other_keyword_scores) if other_keyword_scores else 0,
+                        "taxonomy_avg": sum(taxonomy_scores) / len(taxonomy_scores) if taxonomy_scores else 0
+                    }
+                }
+            else:
+                score_stats = None
+
             # If no books found
             if not filtered_books:
                 # Log query with 0 results
-                log_query(user_id, text, 0, total_time, categories)
+                log_query(user_id, text, 0, total_time, categories, score_stats)
                 
                 return jsonify({
-                    "description": "Aucun livre trouvé pour cette requête.",
-                    "user_id": user_id
+                    "description": categories["Description"],
+                    "user_id": user_id,
+                    "total_books": 0
                 })
 
             # Log successful query
-            log_query(user_id, text, len(filtered_books), total_time, categories)
+            log_query(user_id, text, len(filtered_books), total_time, categories, score_stats)
 
             # Return length of filtered books and description with performance metrics
             return jsonify({

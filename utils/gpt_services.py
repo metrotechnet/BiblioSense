@@ -10,7 +10,7 @@ from openai import OpenAI
 
 # -------------------- Query Logging Functions --------------------
 
-def log_query(user_id, query_text, results_count, response_time, gpt_categories=None, query_log_file="dbase/query_log.json"):
+def log_query(user_id, query_text, results_count, response_time, gpt_categories=None, score_stats=None, query_log_file="dbase/query_log.json"):
     """
     Log search queries to a file for analysis
     
@@ -20,6 +20,7 @@ def log_query(user_id, query_text, results_count, response_time, gpt_categories=
         results_count (int): Number of results found
         response_time (float): Time taken to process the query
         gpt_categories (dict): GPT classification results (optional)
+        score_stats (dict): Score statistics from book filtering (optional)
         query_log_file (str): Path to the log file (default: "dbase/query_log.json")
     """
     try:
@@ -70,6 +71,10 @@ def log_query(user_id, query_text, results_count, response_time, gpt_categories=
                 }
         else:
             log_entry["has_gpt_classification"] = False
+        
+        # Add score statistics if provided
+        if score_stats:
+            log_entry["score_stats"] = score_stats
         
         # Add to logs
         logs.append(log_entry)
@@ -161,7 +166,8 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
         Tu es un classificateur de requêtes spécialisé dans la recherche de livres. 
         Analyse la requête ci-dessous et renvoie uniquement un objet JSON (aucun texte hors JSON) 
         qui contient les catégories pertinentes de la taxonomie ainsi que les mots-clés extraits.
-        Par la suite, transforme la taxonomie trouvée en une description simple, claire et fluide en français, destinée à un lecteur non spécialiste. 
+        Par la suite, transforme la taxonomie trouvée en une description simple et spécifique à la requête, claire et fluide en français, destinée à un lecteur non spécialiste. 
+        Ajoute une phrase de description générale sur la taxonomie des livres.
         Exprime-toi avec des phrases complètes et évite tout jargon technique.
 
         ### Taxonomie :
