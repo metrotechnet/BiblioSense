@@ -426,8 +426,8 @@ def create_app():
             # Sort by descending score (title/author matches will be at top due to highest weight)
             filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
             # print first 100 title with score for debugging
-            for b in filtered_books[:10]:
-                print(f" - {b.get('titre', 'Unknown Title')} (Score: {b['score']}, Title/Author: {b.get('title_author_matches',0)}, Other Keywords: {b.get('other_keyword_matches',0)}, Taxonomy: {b.get('taxonomy_matches',0)})")
+            # for b in filtered_books[:10]:
+            #     print(f" - {b.get('titre', 'Unknown Title')} (Score: {b['score']}, Title/Author: {b.get('title_author_matches',0)}, Other Keywords: {b.get('other_keyword_matches',0)}, Taxonomy: {b.get('taxonomy_matches',0)})")
             # Store filtered results for this user session
             user_filtered_books[user_id] = filtered_books
             
