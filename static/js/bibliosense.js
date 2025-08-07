@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             } catch (error) {
                 domService.showError("Erreur lors de la recherche. Veuillez réessayer.");
+                domService.stopSpinner();
             }
         });
 

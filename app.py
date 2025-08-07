@@ -341,9 +341,9 @@ def create_app():
             # This identifies specific fields (title, author, genre, etc.) mentioned in the query
             keywords_result = cached_gpt_keywords(query_text)
             keyword_items = list(keywords_result["Mots-clés"].items())
-            
+            # print in structure format
+            print(f"   → Extracted keywords: {json.dumps(keyword_items, ensure_ascii=False)}")
             gpt_keywords_time = time.time() - gpt_start_time
-            print(f"⚡ GPT keyword extraction: {gpt_keywords_time:.3f}s")
 
             # ==================== PHASE 2: KEYWORD-BASED FILTERING ====================
             keyword_filter_start = time.time()
@@ -360,7 +360,6 @@ def create_app():
             )
             
             keyword_filter_time = time.time() - keyword_filter_start
-            print(f"📚 Keyword filtering: {keyword_filter_time:.3f}s")
             print(f"   → Title/Author matches: {len(title_author_matches)}")
             print(f"   → Other keyword matches: {len(other_keyword_matches)}")
 
@@ -386,7 +385,7 @@ def create_app():
             elif has_title_or_author==False and len(other_keyword_matches) > 0:
                 print("🤔 Strategy: No title/author, using GPT taxonomy")
                 # Not confident about title/author matches, rely on GPT classification
-                merged_taxonomy = cached_gpt_classifier(query_text)
+                merged_taxonomy = []
                 filtered_books = other_keyword_matches 
 
             # Strategy 4: No title/author or other keyword matches 
@@ -407,24 +406,22 @@ def create_app():
             # print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
 
             taxonomy_time = time.time() - taxonomy_start_time
-            print(f"🏷️  Taxonomy processing: {taxonomy_time:.3f}s")
 
             # ==================== PHASE 4: TAXONOMY-BASED EXPANSION ====================
             taxonomy_expansion_start = time.time()
             
             # Find additional books matching the established taxonomy
             # Exclude books already found through title/author matching
-            title_author_book_ids = {book["id"] for book in title_author_matches}
-            taxonomy_matches = find_taxonomy_matches(
-                books_data, merged_taxonomy, title_author_book_ids
-            )
-            
-            # Combine all results: prioritized matches + taxonomy expansions
-            filtered_books.extend(taxonomy_matches)
+            taxonomy_matches = []
+            if len(merged_taxonomy) > 0:
+                title_author_book_ids = {book["id"] for book in title_author_matches}
+                taxonomy_matches = find_taxonomy_matches(
+                    books_data, merged_taxonomy, title_author_book_ids
+                )          
+                # Combine all results: prioritized matches + taxonomy expansions
+                filtered_books.extend(taxonomy_matches)
             
             taxonomy_expansion_time = time.time() - taxonomy_expansion_start
-            print(f"🔗 Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
-            print(f"   → Additional taxonomy matches: {len(taxonomy_matches)}")
 
             # ==================== PHASE 5: DESCRIPTION GENERATION ====================
             description_start_time = time.time()
@@ -433,15 +430,14 @@ def create_app():
             description_result = cached_gpt_description(query_text, merged_taxonomy)
             
             description_time = time.time() - description_start_time
-            print(f"📝 Description generation: {description_time:.3f}s")
             
             # ==================== PHASE 6: RESULTS PROCESSING & STORAGE ====================
             storage_start_time = time.time()
             
             # Debug output: show top results for verification
-            print(f"🎯 Final results preview:")
-            for i, book in enumerate(filtered_books[:10], 1):
-                print(f"   {i}. {book.get('titre', 'Unknown Title')} (Score: {book.get('score', 0)})")
+            # print(f"🎯 Final results preview:")
+            # for i, book in enumerate(filtered_books[:10], 1):
+            #     print(f"   {i}. {book.get('titre', 'Unknown Title')} (Score: {book.get('score', 0)})")
 
             # Store filtered results in user session for pagination
             user_filtered_books[user_id] = filtered_books
@@ -458,15 +454,15 @@ def create_app():
             performance_monitor.track_request(user_id, total_time)
             
             # Detailed performance logging
-            print(f"� Comprehensive Performance Analysis for user {user_id}:")
-            print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
-            print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
-            print(f"   │  └─ Description generation: {description_time:.3f}s")
-            print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
-            print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
-            print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
-            print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
-            print(f"   ├─ Storage operations: {storage_time:.3f}s")
+            # print(f"� Comprehensive Performance Analysis for user {user_id}:")
+            # print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
+            # print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
+            # print(f"   │  └─ Description generation: {description_time:.3f}s")
+            # print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
+            # print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
+            # print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
+            # print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
+            # print(f"   ├─ Storage operations: {storage_time:.3f}s")
             print(f"   └─ TOTAL REQUEST TIME: {total_time:.3f}s")
             print(f"   📚 Results: {len(filtered_books)} books found")
             

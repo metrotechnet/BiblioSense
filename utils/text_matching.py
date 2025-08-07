@@ -219,11 +219,11 @@ def smart_keyword_match(query_value, book_field, field_name=""):
             query_pages = int(re.sub(r'\D', '', query_value))
             book_pages = int(re.sub(r'\D', '', book_field))
             if "plus" in query_value.lower() and book_pages >= query_pages:
-                return 1.0
+                return 0.8
             elif "moins" in query_value.lower() and book_pages <= query_pages:
-                return 1.0
+                return 0.8
             elif abs(query_pages - book_pages) <= 10:
-                return 1.0
+                return 0.9
             else:
                 return 0.0
         except ValueError:
@@ -234,12 +234,12 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         try:
             query_year = int(re.sub(r'\D', '', query_value))
             book_year = int(re.sub(r'\D', '', book_field))
-            if query_year == book_year:
+            if "plus" in query_value.lower() and book_year >= query_year:
+                return 0.0
+            elif "moins" in query_value.lower() and book_year <= query_year:
+                return 0.0
+            elif query_year == book_year:
                 return 0.9
-            elif abs(query_year - book_year) <= 1:
-                return 0.8
-            elif abs(query_year - book_year) <= 5:
-                return 0.5
             else:
                 return 0.0
         except ValueError:
@@ -262,44 +262,18 @@ def smart_keyword_match(query_value, book_field, field_name=""):
             return 0.0
         
     elif field_name.lower() in ["categorie", "category", "genre"]:
-        if query_lower == book_lower:
+        if re.search(r'\b' + re.escape(query_lower) + r'\b', book_lower):
             return 0.9
-        elif query_lower in book_lower or book_lower in query_lower:
-            return 0.8
         else:
             return 0.0
        
     elif field_name.lower() in ["resume", "summary", "description"]:
-        if query_lower == book_lower:
-            return 0.9
-        elif query_lower in book_lower or book_lower in query_lower:
+        # Check if book_lower appears as full words in query_lower
+        if re.search(r'\b' + re.escape(query_value.strip()) + r'\b', book_lower):
             return 0.8
         else:
             return 0.0
-        
-    # # Fallback to substring match
-    # if query_lower in book_lower or book_lower in query_lower:
-    #     return 0.8
-    # elif book_lower.startswith(query_lower) or query_lower.startswith(book_lower):
-    #     return 0.6
-    # elif query_lower in book_lower.split() or book_lower in query_lower.split():
-    #     return 0.4  
-    # elif re.search(r'\b' + re.escape(query_lower) + r'\b', book_lower) or re.search(r'\b' + re.escape(book_lower) + r'\b', query_lower):
-    #     return 0.4
-    # elif any(word in book_lower for word in query_lower.split()) or any(word in query_lower for word in book_lower.split()):
-    #     return 0.2
-    # # Partial substring match
-    # common_length = len(set(query_lower).intersection(set(book_lower))) 
-    # if common_length >= min(len(query_lower), len(book_lower)) / 2:
-    #     return 0.3  
 
-    # # Word-based matching
-    # query_words = set(query_lower.split())
-    # book_words = set(book_lower.split())
-    # common_words = query_words.intersection(book_words)
-    
-    # if common_words:
-    #     return len(common_words) / max(len(query_words), len(book_words)) * 0.6
     
     return 0.0
 
@@ -331,6 +305,14 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
         if isinstance(keyword_values, str):
             # Backward compatibility for single keyword
             best_match_score = smart_keyword_match(keyword_values, book_field, keyword_key)
+            
+            # If keyword_key is 'categorie', also check 'resume' field
+            if keyword_key == 'categorie':
+                resume_field = book.get('resume')
+                if resume_field:
+                    resume_score = smart_keyword_match(keyword_values, resume_field, 'resume')
+                    best_match_score = max(best_match_score, resume_score)
+                    
         elif isinstance(keyword_values, list):
             # New logic for multiple synonymous keywords
             best_match_score = 0
@@ -338,6 +320,15 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
                 match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
                 if match_score > best_match_score:
                     best_match_score = match_score
+            
+            # If keyword_key is 'categorie', also check 'resume' field for all variants
+            if keyword_key == 'categorie':
+                resume_field = book.get('resume')
+                if resume_field:
+                    for keyword_variant in keyword_values:
+                        resume_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
+                        if resume_score > best_match_score:
+                            best_match_score = resume_score
         else:
             best_match_score = 0
 
@@ -524,7 +515,7 @@ def filter_books_by_keywords(books_data, keyword_items, title_author_fields):
         if title_author_score >= 1:
             book_copy = {**book, "score": title_author_score}
             title_author_matches.append(book_copy)
-        elif title_author_score == 0 and other_keyword_score > 1:
+        elif title_author_score == 0 and other_keyword_score > 0:
             book_copy = {**book, "score": other_keyword_score}
             other_keyword_matches.append(book_copy)
 

@@ -127,7 +127,6 @@ def get_catagories_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache
         
         # Stocker dans le cache pour les requêtes futures
         gpt_cache.set(text, taxonomy_data, categories)
-        print(f"⏱️  GPT categories classification (new): {gpt_time:.2f}s")
         
         return categories
 
@@ -170,7 +169,6 @@ def get_keywords_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache=N
         
         # Stocker dans le cache pour les requêtes futures
         gpt_cache.set(cache_text, taxonomy_data, keywords)
-        print(f"⏱️  GPT keywords extraction (new): {gpt_time:.2f}s")
         
         return keywords
 
@@ -208,7 +206,6 @@ def get_description_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cach
         
         # Stocker dans le cache pour les requêtes futures
         gpt_cache.set(text, taxonomy_data, description)
-        print(f"⏱️  GPT categories classification (new): {gpt_time:.2f}s")
 
         return description
 
@@ -249,63 +246,7 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
     Returns:
         list or dict: Parsed GPT response as JSON.
     """
-    # OLD VERBOSE PROMPT (40+ lines) - KEPT FOR REFERENCE
-    # old_prompt = f"""
-    #     Tu es un expert en classification littéraire qui analyse les requêtes de recherche de livres.
-        
-    #     Ta mission : analyser la requête utilisateur et extraire les catégories taxonomiques pertinentes 
-    #     qui correspondent le mieux à ce que l'utilisateur recherche.
-        
-    #     ### Requête de l'utilisateur :
-    #     "{text}"
-        
-    #     ### Taxonomie disponible pour la classification :
-    #     {json.dumps(taxonomy, ensure_ascii=False, indent=2)}
-        
-    #     ### Instructions de classification :
-    #     1. Analyse attentivement la requête pour identifier les thèmes, genres, et caractéristiques demandés
-    #     2. Sélectionne uniquement les catégories taxonomiques qui correspondent à la requête
-    #     3. Ne garde que les sous-catégories pertinentes dans chaque section
-    #     4. Si une catégorie principale n'est pas pertinente, omets-la complètement
-    #     5. Préserve la structure hiérarchique de la taxonomie
-        
-    #     ### Exemples de classification :
-    #     - Requête "romans policiers" → Genre Littéraire: Fiction, Thèmes: crime/mystère
-    #     - Requête "biographies d'artistes" → Genre: Non-fiction (Biographies), Thèmes: art/culture
-    #     - Requête "livres pour enfants" → Type de Public: Format (Jeunesse)
-        
-    #     ### Format de réponse JSON strict :
-    #     {{
-    #             "Genre Littéraire": {{
-    #                 "Fiction": ["sous-catégorie1", "sous-catégorie2"] ou null,
-    #                 "Non-fiction": ["sous-catégorie1"] ou null
-    #             }},
-    #             "Thèmes - Concepts Clés": {{
-    #                 "Société": ["thème1", "thème2"] ou null,
-    #                 "Relations humaines": ["thème1"] ou null,
-    #                 "Épopées et quêtes": ["thème1"] ou null,
-    #                 "Philosophie / Métaphysique": ["thème1"] ou null
-    #             }},
-    #             "Type de Public": {{
-    #                 "Format": ["format1"] ou null
-    #             }},
-    #             "Structure Narrative": {{
-    #                 "Point de vue": ["pov1"] ou null,
-    #                 "Temporalité": ["temp1"] ou null,
-    #                 "Style": ["style1"] ou null
-    #             }},
-    #             "Personnages / Relations": {{
-    #                 "Type de protagoniste": ["type1"] ou null,
-    #                 "Relations dominantes": ["relation1"] ou null
-    #             }}
-    #     }}
-        
-    #     Règles importantes :
-    #     - Utilise null pour les catégories non pertinentes
-    #     - Sois précis et ne sur-classifie pas
-    #     - Base-toi uniquement sur ce qui est explicitement ou implicitement demandé
-    #     """
-
+  
     # OPTIMIZED PROMPT (8 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE
     prompt = f"""Classifie cette requête de livre selon la taxonomie donnée. Retourne seulement les catégories pertinentes.
 
@@ -330,7 +271,6 @@ def get_catagories_with_gpt(text, taxonomy, openai_client):
         # Remove possible code block wrappers from GPT output
         gpt_response = gpt_response.replace("```json", "").replace("```", "").strip()
         # Parse the JSON response
-        print(gpt_response)
         return json.loads(gpt_response)
     except Exception as e:
         # Raise a runtime error if anything goes wrong
@@ -348,81 +288,23 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
     Returns:
         list or dict: Parsed GPT response as JSON.
     """
-    # prompt = f"""
-    #     Tu es un classificateur de requêtes spécialisé dans la recherche de livres. 
-    #     Analyse la requête ci-dessous et identifie uniquement les informations pertinentes demandées.
-    #     Retourne un objet JSON contenant SEULEMENT les champs en lien direct avec la requête.
-
-
-    #     ### Champs disponibles pour les mots-clés :
-    #     - titre : titre du livre
-    #     - auteur : nom(s) d’auteur(s)
-    #     - resume : résumé ou description du livre (important)
-    #     - editeur : éditeur
-    #     - langue : langue
-    #     - categorie : catégorie ou domaine
-    #     - parution : date de publication
-    #     - pages : nombre de pages
-
-    #     ### Requête utilisateur :
-    #     {text}
-
-    #     ### Instructions de classification :
-    #     1. **Analyse la requête** : identifie quels éléments sont mentionnés ou recherchés
-    #     2. **Sélectionne uniquement les champs pertinents** : n'inclus que les champs directement liés à la requête
-    #     3. **Omets les champs non pertinents** : si un champ n'est pas mentionné ou sous-entendu, ne l'inclus pas
-    #     4. **Génère des synonymes et variantes** pour chaque champ pertinent
-    #     5. **Inclus les variantes orthographiques**, synonymes et termes connexes
-
-    #     ### Exemples d'analyse :
-    #     - "livres de Stephen King" → SEULEMENT auteur: ["Stephen King", "S. King"]
-    #     - "romans policiers" → SEULEMENT categorie: ["policier", "polar", "thriller", "crime"]
-    #     - "livres en anglais sur la guerre" → langue: ["anglais", "english"] ET resume: ["guerre", "conflit", "bataille"]
-    #     - "romans récents" → parution: ["récent", "nouveau", "2020s"] ET categorie: ["roman", "fiction"]
-
-    #     ### Format de réponse JSON (inclus SEULEMENT les champs pertinents) :
-    #     {{
-    #     "Mots-clés": {{
-    #         // N'inclus que les champs détectés dans la requête
-    #         // Exemples selon la requête :
-    #         "auteur": ["nom_exact", "variante"], // si auteur mentionné
-    #         "categorie": ["genre", "synonymes"], // si genre mentionné  
-    #         "resume": ["concept", "synonymes"], // si thème/sujet mentionné
-    #         "langue": ["langue"], // si langue spécifiée
-    #         "parution": ["période"] // si date mentionnée
-    #     }}
-    #     }}
-
-    #     **IMPORTANT** : Ne retourne que les champs explicitement ou implicitement présents dans la requête.
-        
-    #     ### Synonymes par domaine (utilise uniquement si pertinent) :
-    #     - Romance : romantique, sentimental, amoureux, passion, amour
-    #     - Thriller/Policier : suspense, polar, enquête, crime, mystère, detective
-    #     - Fantasy : fantastique, merveilleux, magie, épique, heroic-fantasy
-    #     - Science-fiction : sci-fi, SF, anticipation, futuriste, technologique
-    #     - Historique : période, époque, siècle, chronique, passé, histoire
-    #     - Jeunesse : enfant, ado, adolescent, young adult, junior
-
-
-
-
+ 
     # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
-    prompt = f"""Extrait les mots-clés de recherche de cette requête de livre. Retourne seulement les champs pertinents avec synonymes.
+    prompt = f"""Extrait UN SEUL mot-clé de recherche de cette requête de livre. Identifie le champ le plus pertinent uniquement.
 
         Requête: "{text}"
-        Champs: titre, auteur, resume, editeur, langue, categorie, parution, pages
+        Champs disponibles: titre, auteur, resume, editeur, langue, categorie, parution, pages
 
-        Format JSON: 
-        {{
-            "Mots-clés": {{
-                "auteur": ["nom_exact", "variante"], // si auteur mentionné
-                "categorie": ["genre", "synonymes"], // si genre mentionné  
-                "resume": ["concept", "synonymes"], // si thème/sujet mentionné
-                "langue": ["langue"], // si langue spécifiée
-                "parution": ["période"] // si date mentionnée
-            }}
-        }}
-        Règle:  n'inclus que les champs directement liés à la requête."""
+        Format JSON: {{"Mots-clés": {{"champ_principal": ["mot_clé", "variante1", "variante2"]}}}}
+        IMPORTANT: Retourne UN SEUL champ - celui qui correspond le mieux à la requête.
+        ### Synonymes par domaine (utilise uniquement si pertinent) :
+        - Romance : romantique, sentimental, amoureux, passion, amour
+        - Thriller/Policier : suspense, polar, enquête, crime, mystère, detective
+        - Fantasy : fantastique, merveilleux, magie, épique, heroic-fantasy
+        - Science-fiction : sci-fi, SF, anticipation, futuriste, technologique
+        - Historique : période, époque, siècle, chronique, passé, histoire
+        - Jeunesse : enfant, ado, adolescent, young adult, junior
+    """
 
     try:
         # Call OpenAI GPT model with the constructed prompt
@@ -438,7 +320,6 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
         # Remove possible code block wrappers from GPT output
         gpt_response = gpt_response.replace("```json", "").replace("```", "").strip()
         # Parse the JSON response
-        print(gpt_response)
         return json.loads(gpt_response)
     except Exception as e:
         # Raise a runtime error if anything goes wrong
@@ -456,38 +337,7 @@ def get_description_with_gpt(text, taxonomy, openai_client):
     Returns:
         list or dict: Parsed GPT response as JSON.
     """
-    # OLD VERBOSE PROMPT (25+ lines) - KEPT FOR REFERENCE
-    # old_prompt = f"""
-    #     Tu es un expert en littérature qui aide les lecteurs à découvrir des livres. 
-        
-    #     Ta mission : créer une description claire et engageante qui résume ce que l'utilisateur recherche, 
-    #     en te basant sur sa requête et la taxonomie des livres trouvés.
-        
-    #     ### Contexte de la recherche :
-    #     Requête de l'utilisateur : "{text}"
-        
-    #     Taxonomie des livres correspondants :
-    #     {json.dumps(taxonomy, ensure_ascii=False, indent=2)}
-        
-    #     ### Instructions pour la description :
-    #     1. Écris une description de 2-3 phrases maximum
-    #     2. Commence par "Les livres..." 
-    #     3. Mentionne les genres, thèmes ou caractéristiques principales
-    #     4. Utilise un langage simple et accessible
-    #     5. Évite le jargon technique ou les termes complexes
-    #     6. Rends la description attrayante pour donner envie de lire
-        
-    #     ### Exemples de bonnes descriptions :
-    #     - "Voici des livres de science-fiction qui explorent l'avenir de l'humanité et les technologies futuristes."
-    #     - "Ces romans policiers mettent en scène des enquêtes palpitantes et des mystères à résoudre."
-    #     - "Voici une sélection de biographies inspirantes de personnalités qui ont marqué l'histoire."
-        
-    #     ### Format de réponse (strictement JSON) :
-    #     {{
-    #         "Description": "Votre description claire et engageante ici"
-    #     }}
-    #     """
-
+ 
     # OPTIMIZED PROMPT (4 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE
     prompt = f"""Créé une description engageante (2-3 phrases) pour cette recherche de livres basée sur la requête et taxonomie.
 
@@ -511,7 +361,6 @@ def get_description_with_gpt(text, taxonomy, openai_client):
         # Remove possible code block wrappers from GPT output
         gpt_response = gpt_response.replace("```json", "").replace("```", "").strip()
         # Parse the JSON response
-        print(gpt_response)
         return json.loads(gpt_response)
     except Exception as e:
         # Raise a runtime error if anything goes wrong
