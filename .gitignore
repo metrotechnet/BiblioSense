@@ -9,3 +9,25 @@ dbase/old/*
 dbase/sessions_backup.json
 dbase/sessions.json
 dbase/query_log.json
+
+# Documentation et fichiers temporaires
+PHASE2_README.md
+CAPACITY_FINAL_REPORT.md
+DEBUG_OPTIMIZATION.md
+EXEMPLES_REQUETES.md
+SECRET_MANAGER_GUIDE.md
+
+# Fichiers favicon (utiliser static/images/favicon.ico à la place)
+static/favicon/
+*.ico
+favicon.ico
+
+# Fichiers de test et config obsolètes
+config.py
+test_phase2.py
+test_gpt_cache.py
+test_no_blocking.py
+
+# Fichiers déplacés vers utils/
+gpt_services.py
+text_matching.py
