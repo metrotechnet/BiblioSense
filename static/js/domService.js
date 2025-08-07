@@ -385,6 +385,7 @@ const domService = {
             img.src = book.couverture;
             img.alt = "Couverture";
             img.style.maxWidth = "100px";
+            img.style.padding = "5px";
             img.style.display = "none"; // Hide initially until loaded
             
             let imageLoaded = false;

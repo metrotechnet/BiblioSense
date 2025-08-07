@@ -1,3 +1,4 @@
+from re import Match
 from flask import Flask, jsonify, render_template, request, session
 import pandas as pd
 from openai import OpenAI
@@ -6,8 +7,8 @@ from waitress import serve
 import os
 import time
 import uuid
-from utils.gpt_services import get_catagories_with_gpt, get_catagories_with_gpt_cached, create_cached_gpt_function, log_query
-from utils.text_matching import smart_keyword_match
+from utils.gpt_services import get_catagories_with_gpt, get_catagories_with_gpt_cached, get_description_with_gpt_cached, get_keywords_with_gpt_cached, create_cached_gpt_function, log_query
+from utils.text_matching import smart_keyword_match, calculate_keyword_score, calculate_taxonomy_score, merge_taxonomy_from_books, find_taxonomy_matches, filter_books_by_keywords
 from utils.performance_monitor import PerformanceMonitor
 from utils.gpt_cache import GPTCache
 from utils.session_cleanup import SessionCleanup
@@ -84,8 +85,9 @@ def init_data():
 def init_openai_client():
     """
     Initialize OpenAI client with API key from Secret Manager or environment variables.
+    Also clears GPT cache for a fresh start.
     """
-    global openai_client
+    global openai_client, gpt_cache
     
     # Si exécuté en local, charger les credentials depuis un fichier
     project_id = PROJECT_ID
@@ -111,6 +113,15 @@ def init_openai_client():
 
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
     print("✅ OpenAI client initialized")
+    
+    # Clear GPT cache for fresh start
+    if gpt_cache:
+        cache_size_before = len(gpt_cache.cache)
+        gpt_cache.cache.clear()
+        gpt_cache.reset_stats()
+        print(f"🧹 GPT cache cleared at startup ({cache_size_before} entries removed)")
+    else:
+        print("🧹 GPT cache will be cleared after initialization")
 
 # -------------------- Flask Application Factory --------------------
 
@@ -138,8 +149,10 @@ def create_app():
     
     # Create pre-configured cached GPT function
     global cached_gpt_classifier
-    cached_gpt_classifier = create_cached_gpt_function(gpt_cache, openai_client, taxonomy_data)
-    
+    global cached_gpt_keywords
+    global cached_gpt_description
+    cached_gpt_classifier, cached_gpt_keywords, cached_gpt_description = create_cached_gpt_function(gpt_cache, openai_client, taxonomy_data)
+
     print("✅ Optimizations initialized: Performance monitoring, GPT caching, Session cleanup")
     
     # -------------------- Flask Routes --------------------
@@ -279,18 +292,25 @@ def create_app():
     @app.route("/filter", methods=["POST"])
     def filter_categories():
         """
-        Filter books based on a user query using GPT classification.
-
-        Receives JSON with a 'query' field.
-        Uses GPT to classify the query into taxonomy categories and keywords.
-        Filters books by taxonomy and keywords, scores matches, and returns sorted results with a description.
-        """
-        # Start timing
-        start_time = time.time()
+        Advanced book filtering system using GPT-powered classification.
         
+        This endpoint processes user queries through multiple phases:
+        1. GPT keyword extraction for precise field matching
+        2. Multi-tier book filtering (title/author > keywords > taxonomy)  
+        3. Intelligent taxonomy merging and scoring
+        4. Performance monitoring and caching optimization
+        
+        Args:
+            JSON request with 'query' field containing the search text
+            
+        Returns:
+            JSON response with filtered results count and description
+        """
+        # ==================== INITIALIZATION & THROTTLING ====================
+        start_time = time.time()
         global taxonomy_data, books_data, openai_client, user_filtered_books, performance_monitor, gpt_cache
         
-        # Check if system should throttle requests (Phase 2 optimization)
+        # Performance throttling check - prevent system overload
         should_throttle, throttle_reason = performance_monitor.should_throttle()
         if should_throttle:
             return jsonify({
@@ -298,248 +318,264 @@ def create_app():
                 "retry_after": 30
             }), 503
         
-        # Session should already exist from index route, but safety check
+        # Session management with fallback safety
         if 'user_id' not in session:
             session['user_id'] = str(uuid.uuid4())
-            print(f"⚠️  Session created in filter_categories (unexpected): {session['user_id']}")
+            print(f"⚠️  Emergency session created in filter_categories: {session['user_id']}")
 
         user_id = session['user_id']
         data = request.get_json()
-        text = data.get("query", "")
+        query_text = data.get("query", "")
         
-        # Update session activity for Phase 2 tracking
+        # Update session activity for cleanup tracking
         if session_cleanup:
             session_cleanup.update_session_activity(user_id)
         
-        print(f"🔍 Processing query for user {user_id}: '{text}'")
+        print(f"🔍 Processing query for user {user_id}: '{query_text}'")
 
         try:
-            # Phase 2: Use pre-configured cached GPT call (simplest approach)
-            gpt_start = time.time()
-            categories = cached_gpt_classifier(text)
-            total_gpt_time = time.time() - gpt_start
-                
-            print(f"Categories from GPT: {categories}")
+            # ==================== PHASE 1: GPT KEYWORD EXTRACTION ====================
+            gpt_start_time = time.time()
             
+            # Extract keywords from user query using cached GPT service
+            # This identifies specific fields (title, author, genre, etc.) mentioned in the query
+            keywords_result = cached_gpt_keywords(query_text)
+            keyword_items = list(keywords_result["Mots-clés"].items())
+            
+            gpt_keywords_time = time.time() - gpt_start_time
+            print(f"⚡ GPT keyword extraction: {gpt_keywords_time:.3f}s")
 
-            # Book filtering logic with performance optimizations
-            filter_start = time.time()
+            # ==================== PHASE 2: KEYWORD-BASED FILTERING ====================
+            keyword_filter_start = time.time()
             
-            # Pre-compute keyword sets for faster lookups
-            keyword_items = list(categories["Mots-clés"].items())
-            taxonomy_items = list(categories["Taxonomie"].items())
+            # Configure field priorities for matching
             title_author_fields = {"titre", "auteur"}
-            
-            # Pre-process taxonomy lookup sets for faster intersection
-            taxonomy_lookup = {}
-            for taxo_key, taxo_classes in taxonomy_items:
-                taxonomy_lookup[taxo_key] = {}
-                for sub_key, sub_values_set in taxo_classes.items():
-                    taxonomy_lookup[taxo_key][sub_key] = set(sub_values_set)
-            
-            # Single pass through books with optimized scoring
-            scored_books = []
-            for book in books_data:
-                # Early exit if no potential matches
-                has_keywords = any(book.get(kw_key) for kw_key, _ in keyword_items)
-                has_taxonomy = book.get("classification")
-                
-                if not has_keywords and not has_taxonomy:
-                    continue
-                
-                taxonomy_score = 0
-                title_author_score = 0
-                other_keyword_score = 0
-                
-                # Parse book taxonomy once (only if needed)
-                book_taxonomy = {}
-                if has_taxonomy and taxonomy_items:
-                    try:
-                        book_taxonomy = json.loads(book["classification"])
-                    except (json.JSONDecodeError, TypeError, KeyError):
-                        book_taxonomy = {}
-                
-                # Check taxonomy matches using pre-computed lookup
-                if book_taxonomy:
-                    for taxo_key, taxo_classes_lookup in taxonomy_lookup.items():
-                        book_taxo_section = book_taxonomy.get(taxo_key)
-                        if book_taxo_section:
-                            for sub_key, sub_values_set in taxo_classes_lookup.items():
-                                book_values = book_taxo_section.get(sub_key)
-                                if book_values:
-                                    if isinstance(book_values, list):
-                                        # Use pre-computed sets for faster intersection
-                                        matches = sub_values_set.intersection(book_values)
-                                        taxonomy_score += len(matches)
-                                    elif book_values in sub_values_set:
-                                        taxonomy_score += 1
-                
-                # Check keyword matches with smart matching (only if has keywords)
-                if has_keywords:
-                    for keyword_key, keyword_values in keyword_items:
-                        book_field = book.get(keyword_key)
-                        if not book_field:
-                            continue
-                            
-                        is_title_author = keyword_key in title_author_fields
-                        
-                        # Handle both single keywords (string) and multiple keywords (list)
-                        if isinstance(keyword_values, str):
-                            # Backward compatibility for single keyword
-                            match_score = smart_keyword_match(keyword_values, book_field, keyword_key)
-                            if match_score > 0.5:
-                                if is_title_author:
-                                    title_author_score += match_score
-                                else:
-                                    other_keyword_score += match_score
-                        elif isinstance(keyword_values, list):
-                            # New logic for multiple synonymous keywords
-                            best_match_score = 0
-                            for keyword_variant in keyword_values:
-                                match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
-                                if match_score > best_match_score:
-                                    best_match_score = match_score
-                                # Early exit if perfect match found
-                                if best_match_score >= 1.0:
-                                    break
-                            # Only count the best match to avoid double-counting synonyms
-                            if best_match_score > 0.5:
-                                if is_title_author:
-                                    title_author_score += best_match_score
-                                else:
-                                    other_keyword_score += best_match_score
-                
-                # Calculate total score with title/author priority
-                total_score = (title_author_score * 100) + (other_keyword_score * 10) + taxonomy_score
-                
-                # Only add books with positive scores
-                if total_score > 10:
-                    # Use dict literal instead of copy() for better performance
-                    scored_books.append({
-                        **book,
-                        "score": total_score,
-                        "title_author_matches": title_author_score,
-                        "other_keyword_matches": other_keyword_score,
-                        "taxonomy_matches": taxonomy_score
-                    })
+            # Check if keywords has title or author flags
+            has_title_or_author = any(kw_key in title_author_fields for kw_key, _ in keyword_items)
 
-            # Sort by descending score (title/author matches will be at top due to highest weight)
-            filtered_books = sorted(scored_books, key=lambda x: x["score"], reverse=True)
-            # print first 100 title with score for debugging
-            # for b in filtered_books[:10]:
-            #     print(f" - {b.get('titre', 'Unknown Title')} (Score: {b['score']}, Title/Author: {b.get('title_author_matches',0)}, Other Keywords: {b.get('other_keyword_matches',0)}, Taxonomy: {b.get('taxonomy_matches',0)})")
-            # Store filtered results for this user session
+
+            # Multi-tier filtering: separate title/author matches from general keyword matches
+            title_author_matches, other_keyword_matches = filter_books_by_keywords(
+                books_data, keyword_items, title_author_fields
+            )
+            
+            keyword_filter_time = time.time() - keyword_filter_start
+            print(f"📚 Keyword filtering: {keyword_filter_time:.3f}s")
+            print(f"   → Title/Author matches: {len(title_author_matches)}")
+            print(f"   → Other keyword matches: {len(other_keyword_matches)}")
+
+            # ==================== PHASE 3: TAXONOMY STRATEGY SELECTION ====================
+            taxonomy_start_time = time.time()
+            filtered_books = []
+            
+            # Strategy 1: High-confidence title/author matches found
+            if len(title_author_matches) > 0 and title_author_matches[0].get("score", 0) >= 1:
+                print("🎯 Strategy: Using title/author matches with merged taxonomy")
+                # Merge taxonomy from found books to find similar works
+                merged_taxonomy = merge_taxonomy_from_books(title_author_matches)
+                filtered_books = title_author_matches
+                
+            # Strategy 2: Low-confidence or no title/author matches  
+            elif len(title_author_matches) > 0:
+                print("🤔 Strategy: Uncertain title/author, using GPT taxonomy")
+                # Not confident about title/author matches, rely on GPT classification
+                merged_taxonomy = cached_gpt_classifier(query_text)
+                filtered_books = []
+
+            # Strategy 3: No title/author matches, check for other keywords
+            elif has_title_or_author==False and len(other_keyword_matches) > 0:
+                print("🤔 Strategy: No title/author, using GPT taxonomy")
+                # Not confident about title/author matches, rely on GPT classification
+                merged_taxonomy = cached_gpt_classifier(query_text)
+                filtered_books = other_keyword_matches 
+
+            # Strategy 4: No title/author or other keyword matches 
+            elif len(other_keyword_matches) == 0:
+                print("🤔 Strategy: No title/author or other keyword matches, using GPT taxonomy")
+                # Not confident about title/author matches, rely on GPT classification
+                merged_taxonomy = cached_gpt_classifier(query_text)
+                filtered_books = [] 
+
+
+            # Normalize taxonomy format (convert sets to lists for JSON serialization)
+            for main_category in merged_taxonomy:
+                for sub_key in merged_taxonomy[main_category]:
+                    if isinstance(merged_taxonomy[main_category][sub_key], set):
+                        merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
+
+            # print merged taxonomy for debugging
+            # print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
+
+            taxonomy_time = time.time() - taxonomy_start_time
+            print(f"🏷️  Taxonomy processing: {taxonomy_time:.3f}s")
+
+            # ==================== PHASE 4: TAXONOMY-BASED EXPANSION ====================
+            taxonomy_expansion_start = time.time()
+            
+            # Find additional books matching the established taxonomy
+            # Exclude books already found through title/author matching
+            title_author_book_ids = {book["id"] for book in title_author_matches}
+            taxonomy_matches = find_taxonomy_matches(
+                books_data, merged_taxonomy, title_author_book_ids
+            )
+            
+            # Combine all results: prioritized matches + taxonomy expansions
+            filtered_books.extend(taxonomy_matches)
+            
+            taxonomy_expansion_time = time.time() - taxonomy_expansion_start
+            print(f"🔗 Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
+            print(f"   → Additional taxonomy matches: {len(taxonomy_matches)}")
+
+            # ==================== PHASE 5: DESCRIPTION GENERATION ====================
+            description_start_time = time.time()
+            
+            # Generate user-friendly description of the search results
+            description_result = cached_gpt_description(query_text, merged_taxonomy)
+            
+            description_time = time.time() - description_start_time
+            print(f"📝 Description generation: {description_time:.3f}s")
+            
+            # ==================== PHASE 6: RESULTS PROCESSING & STORAGE ====================
+            storage_start_time = time.time()
+            
+            # Debug output: show top results for verification
+            print(f"🎯 Final results preview:")
+            for i, book in enumerate(filtered_books[:10], 1):
+                print(f"   {i}. {book.get('titre', 'Unknown Title')} (Score: {book.get('score', 0)})")
+
+            # Store filtered results in user session for pagination
             user_filtered_books[user_id] = filtered_books
             
-            filter_time = time.time() - filter_start
-            print(f"⏱️  Book filtering: {filter_time:.2f}s")
+            storage_time = time.time() - storage_start_time
 
-            # Calculate total time and track performance (Phase 2)
+            # ==================== PHASE 7: PERFORMANCE ANALYTICS ====================
+            # Calculate comprehensive timing breakdown
             total_time = time.time() - start_time
+            total_gpt_time = gpt_keywords_time + description_time
+            total_filtering_time = keyword_filter_time + taxonomy_time + taxonomy_expansion_time
+            
+            # Track request for performance monitoring
             performance_monitor.track_request(user_id, total_time)
             
-            print(f"📊 Performance Summary for user {user_id}:")
-            print(f"   - Total GPT time: {total_gpt_time:.2f}s ({(total_gpt_time/total_time)*100:.1f}%)")
-            print(f"   - Book filtering: {filter_time:.2f}s ({(filter_time/total_time)*100:.1f}%)")
-            print(f"   - Total request time: {total_time:.2f}s")
-            print(f"   - Books found: {len(filtered_books)}")
+            # Detailed performance logging
+            print(f"� Comprehensive Performance Analysis for user {user_id}:")
+            print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
+            print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
+            print(f"   │  └─ Description generation: {description_time:.3f}s")
+            print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
+            print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
+            print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
+            print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
+            print(f"   ├─ Storage operations: {storage_time:.3f}s")
+            print(f"   └─ TOTAL REQUEST TIME: {total_time:.3f}s")
+            print(f"   📚 Results: {len(filtered_books)} books found")
             
-            # Phase 2: Log cache and performance statistics (safe mode)
-            cache_stats = gpt_cache.get_stats_fast()  # Version rapide
-            perf_stats = performance_monitor.get_stats(safe_mode=True)  # Mode sécurisé
-            print(f"🔄 Cache hit rate: {cache_stats['hit_rate_percent']:.1f}% ({cache_stats['cache_hits']}/{cache_stats['cache_hits'] + cache_stats['cache_misses']})")
+            # Cache and system performance metrics
+            cache_stats = gpt_cache.get_stats_fast()
+            perf_stats = performance_monitor.get_stats(safe_mode=True)
+            # print(f"🔄 Cache efficiency: {cache_stats['hit_rate_percent']:.1f}% hit rate")
             
-            # Afficher la mémoire seulement si disponible (pas en mode debug)
-            if not perf_stats.get('debug_mode', False):
-                print(f"👥 Active users: {perf_stats['active_users']}, Memory: {perf_stats['memory_usage_percent']:.1f}%")
-            else:
-                print(f"👥 Active users: {perf_stats['active_users']} (debug mode)")
-            
-            
-            # Log different types of matches with priority
-            title_author_matches = sum(1 for book in filtered_books if book.get("title_author_matches", 0) > 0)
-            other_keyword_matches = sum(1 for book in filtered_books if book.get("other_keyword_matches", 0) > 0)
-            taxonomy_only = len(filtered_books) - title_author_matches - other_keyword_matches
-            print(f"   - Title/Author matches: {title_author_matches} (highest priority)")
-            print(f"   - Other keyword matches: {other_keyword_matches} (medium priority)")
-            print(f"   - Taxonomy only: {taxonomy_only} (lowest priority)")
+            # if not perf_stats.get('debug_mode', False):
+            #     print(f"� System resources: {perf_stats['active_users']} users, {perf_stats['memory_usage_percent']:.1f}% memory")
+            # else:
+            #     print(f"� System status: {perf_stats['active_users']} users (debug mode)")
 
-            # Calculate score statistics for logging
+            # ==================== PHASE 8: RESULT ANALYTICS & LOGGING ====================
+            # Categorize and analyze match types
+            title_author_count = len(title_author_matches)
+            other_keyword_count = len(other_keyword_matches)
+            taxonomy_only_count = len(taxonomy_matches)
+            
+            # print(f"🔍 Match type breakdown:")
+            # print(f"   ├─ Title/Author matches: {title_author_count} (highest priority)")
+            # print(f"   ├─ Other keyword matches: {other_keyword_count} (medium priority)")
+            # print(f"   └─ Taxonomy-only matches: {taxonomy_only_count} (lowest priority)")
+
+            # Calculate detailed scoring statistics for analytics
+            score_stats = None
             if filtered_books:
-                scores = [book["score"] for book in filtered_books]
-                title_author_scores = [book.get("title_author_matches", 0) for book in filtered_books]
-                other_keyword_scores = [book.get("other_keyword_matches", 0) for book in filtered_books]
-                taxonomy_scores = [book.get("taxonomy_matches", 0) for book in filtered_books]
-                
+                scores = [book.get("score", 0) for book in filtered_books]
                 score_stats = {
                     "total_scores": {
-                        "max": max(scores),
-                        "min": min(scores),
-                        "avg": sum(scores) / len(scores)
+                        "max": max(scores) if scores else 0,
+                        "min": min(scores) if scores else 0,
+                        "avg": sum(scores) / len(scores) if scores else 0
                     },
-                    "title_author_matches": title_author_matches,
-                    "other_keyword_matches": other_keyword_matches,
-                    "taxonomy_only_matches": taxonomy_only,
-                    "match_breakdown": {
-                        "title_author_avg": sum(title_author_scores) / len(title_author_scores) if title_author_scores else 0,
-                        "other_keyword_avg": sum(other_keyword_scores) / len(other_keyword_scores) if other_keyword_scores else 0,
-                        "taxonomy_avg": sum(taxonomy_scores) / len(taxonomy_scores) if taxonomy_scores else 0
+                    "match_counts": {
+                        "title_author_matches": title_author_count,
+                        "other_keyword_matches": other_keyword_count,  
+                        "taxonomy_only_matches": taxonomy_only_count
+                    },
+                    "performance_breakdown": {
+                        "title_author_avg_score": 100 if title_author_count > 0 else 0,
+                        "other_keyword_avg_score": 100 if other_keyword_count > 0 else 0,
+                        "taxonomy_avg_score": (sum(book.get("score", 0) for book in taxonomy_matches) / len(taxonomy_matches)) if taxonomy_matches else 0
                     }
                 }
-            else:
-                score_stats = None
 
-            # If no books found
+            # ==================== PHASE 9: RESPONSE GENERATION ====================
+            # Prepare logging data structure
+            log_data = {
+                "Taxonomy": merged_taxonomy, 
+                "Mots-clés": keywords_result["Mots-clés"], 
+                "Description": description_result.get("Description", "")
+            }
+
+            # Handle different result scenarios
             if not filtered_books:
-                # Log query with 0 results
-                log_query(user_id, text, 0, total_time, categories, score_stats)
+                # No results found - log and return empty response
+                log_query(user_id, query_text, 0, total_time, log_data, score_stats)
                 
                 return jsonify({
-                    "description": categories["Description"],
+                    "description": description_result.get("Description", "Aucune description disponible"),
                     "user_id": user_id,
-                    "total_books": 0
+                    "total_books": 0,
+                    "performance": {
+                        "total_time": round(total_time, 3),
+                        "gpt_time": round(total_gpt_time, 3),
+                        "filtering_time": round(total_filtering_time, 3)
+                    }
+                })
+            else:
+                # Successful search - log and return results
+                log_query(user_id, query_text, len(filtered_books), total_time, log_data, score_stats)
+                
+                return jsonify({
+                    "description": description_result.get("Description", "Aucune description disponible"),
+                    "user_id": user_id,
+                    "total_books": len(filtered_books),
+                    "performance": {
+                        "total_time": round(total_time, 3),
+                        "gpt_time": round(total_gpt_time, 3),
+                        "filtering_time": round(total_filtering_time, 3),
+                        "cache_hit_rate": round(cache_stats['hit_rate_percent'], 1)
+                    }
                 })
 
-            # Log successful query
-            log_query(user_id, text, len(filtered_books), total_time, categories, score_stats)
-
-            # Return length of filtered books and description with performance metrics
-            return jsonify({
-                "description": categories["Description"],
-                "user_id": user_id,
-                "total_books": len(filtered_books),
-                # Phase 2: Include performance metrics in response
-                "performance": {
-                    "response_time": total_time,
-                    "gpt_time": total_gpt_time,
-                    "filter_time": filter_time,
-                    "cache_hit": categories is not None and gpt_cache.get(text, taxonomy_data) is not None
-                }
-            })
-
         except json.JSONDecodeError as e:
+            # ==================== ERROR HANDLING: JSON DECODE ====================
             total_time = time.time() - start_time
-            # Log failed query
-            log_query(user_id, text, -1, total_time)  # -1 indicates error
-            # Phase 2: Track failed requests for monitoring
+            log_query(user_id, query_text, -1, total_time)  # -1 indicates error
             performance_monitor.track_request(user_id, total_time)
-            print(f"❌ JSON Decode Error: {e} (after {total_time:.2f}s)")
+            
+            print(f"❌ JSON Decode Error: {e} (after {total_time:.3f}s)")
             return jsonify({
                 "error": "Invalid response format from classification service",
                 "user_id": user_id,
-                "performance": {"response_time": total_time, "error": True}
+                "performance": {"response_time": round(total_time, 3), "error": True}
             }), 500
+            
         except Exception as e:
+            # ==================== ERROR HANDLING: GENERAL EXCEPTIONS ====================
             total_time = time.time() - start_time
-            # Log failed query
-            log_query(user_id, text, -1, total_time)  # -1 indicates error
-            # Phase 2: Track failed requests for monitoring
+            log_query(user_id, query_text, -1, total_time)  # -1 indicates error
             performance_monitor.track_request(user_id, total_time)
-            print(f"❌ Error in GPT call: {e} (after {total_time:.2f}s)")
+            
+            print(f"❌ Unexpected error in filter_categories: {e} (after {total_time:.3f}s)")
             return jsonify({
                 "error": "Classification service temporarily unavailable",
                 "user_id": user_id,
-                "performance": {"response_time": total_time, "error": True}
+                "performance": {"response_time": round(total_time, 3), "error": True}
             }), 500
     
     # -------------------- Phase 2 Monitoring Routes --------------------

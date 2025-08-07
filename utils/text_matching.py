@@ -41,6 +41,7 @@ def normalize_text(text):
 def extract_initials_and_names(author_name):
     """
     Extract initials and full names from an author string.
+    If no initials exist, generate them from first names.
     
     Args:
         author_name (str): Author name to analyze
@@ -72,6 +73,12 @@ def extract_initials_and_names(author_name):
             else:
                 result['first_names'].append(part)
     
+    # Generate initials from first names if no initials exist
+    if not result['initials'] and result['first_names']:
+        for first_name in result['first_names']:
+            if first_name and len(first_name) > 0:
+                result['initials'].append(first_name[0].upper()+'.')
+
     return result
 
 
@@ -117,7 +124,6 @@ def author_similarity_score(query_author, book_author):
     
     # Check last names match (highest weight)
     if query_parts['last_names'] and book_parts['last_names']:
-        max_possible_score += 0.6
         for q_last in query_parts['last_names']:
             for b_last in book_parts['last_names']:
                 if q_last == b_last:
@@ -129,7 +135,6 @@ def author_similarity_score(query_author, book_author):
     
     # Check first names vs initials
     if query_parts['first_names'] or query_parts['initials']:
-        max_possible_score += 0.4
         
         # Case 1: Query has initials, book has full first names
         for q_initial in query_parts['initials']:
@@ -194,16 +199,22 @@ def smart_keyword_match(query_value, book_field, field_name=""):
     query_lower = query_value.lower().strip()
     book_lower = book_field.lower().strip()
     
-    # Exact match
-    if query_lower == book_lower:
-        return 1.0
     
     # For author fields, use sophisticated author matching
     if field_name == "auteur" or "author" in field_name.lower():
         return author_similarity_score(query_value, book_field)
-
+    
+    # For title fields, allow partial matches with high weight
+    elif field_name.lower() in ["titre", "title"]:
+        if query_lower == book_lower:
+            return 1.0
+        elif query_lower in book_lower or book_lower in query_lower:
+            return 0.8
+        else:
+            return 0.0
+        
     # For page counts, interpret ranges. if query_value is `plus que` check if pages is more. if query_value is `moins que` check if pages is less.
-    if field_name.lower() in ["pages", "page count", "nombre de pages"]:
+    elif field_name.lower() in ["pages", "page count", "nombre de pages"]:
         try:
             query_pages = int(re.sub(r'\D', '', query_value))
             book_pages = int(re.sub(r'\D', '', book_field))
@@ -217,43 +228,310 @@ def smart_keyword_match(query_value, book_field, field_name=""):
                 return 0.0
         except ValueError:
             return 0.0
+        
+    # for all other fields, do simple substring match with some weighting
+    elif field_name.lower() in ["parution", "publication year", "année de parution"]:
+        try:
+            query_year = int(re.sub(r'\D', '', query_value))
+            book_year = int(re.sub(r'\D', '', book_field))
+            if query_year == book_year:
+                return 0.9
+            elif abs(query_year - book_year) <= 1:
+                return 0.8
+            elif abs(query_year - book_year) <= 5:
+                return 0.5
+            else:
+                return 0.0
+        except ValueError:
+            return 0.0
+        
+    elif field_name.lower() in ["langue", "language"]:
+        if query_lower == book_lower:
+            return 0.9
+        elif query_lower in book_lower or book_lower in query_lower:
+            return 0.8
+        else:
+            return 0.0
+        
+    elif field_name.lower() in ["editeur", "publisher"]:
+        if query_lower == book_lower:
+            return 0.9
+        elif query_lower in book_lower or book_lower in query_lower:
+            return 0.8
+        else:
+            return 0.0
+        
+    elif field_name.lower() in ["categorie", "category", "genre"]:
+        if query_lower == book_lower:
+            return 0.9
+        elif query_lower in book_lower or book_lower in query_lower:
+            return 0.8
+        else:
+            return 0.0
+       
+    elif field_name.lower() in ["resume", "summary", "description"]:
+        if query_lower == book_lower:
+            return 0.9
+        elif query_lower in book_lower or book_lower in query_lower:
+            return 0.8
+        else:
+            return 0.0
+        
+    # # Fallback to substring match
+    # if query_lower in book_lower or book_lower in query_lower:
+    #     return 0.8
+    # elif book_lower.startswith(query_lower) or query_lower.startswith(book_lower):
+    #     return 0.6
+    # elif query_lower in book_lower.split() or book_lower in query_lower.split():
+    #     return 0.4  
+    # elif re.search(r'\b' + re.escape(query_lower) + r'\b', book_lower) or re.search(r'\b' + re.escape(book_lower) + r'\b', query_lower):
+    #     return 0.4
+    # elif any(word in book_lower for word in query_lower.split()) or any(word in query_lower for word in book_lower.split()):
+    #     return 0.2
+    # # Partial substring match
+    # common_length = len(set(query_lower).intersection(set(book_lower))) 
+    # if common_length >= min(len(query_lower), len(book_lower)) / 2:
+    #     return 0.3  
 
-    # Word-based matching
-    query_words = set(query_lower.split())
-    book_words = set(book_lower.split())
-    common_words = query_words.intersection(book_words)
+    # # Word-based matching
+    # query_words = set(query_lower.split())
+    # book_words = set(book_lower.split())
+    # common_words = query_words.intersection(book_words)
     
-    if common_words:
-        return len(common_words) / max(len(query_words), len(book_words)) * 0.6
+    # if common_words:
+    #     return len(common_words) / max(len(query_words), len(book_words)) * 0.6
     
     return 0.0
 
 
-def test_author_matching():
+def calculate_keyword_score(keyword_items, book, title_author_fields):
     """
-    Test function to demonstrate author matching capabilities.
+    Calculate keyword matching score for a book.
+    
+    Args:
+        keyword_items (list): List of (keyword_key, keyword_values) tuples
+        book (dict): Book data dictionary
+        title_author_fields (set): Set of fields considered as title/author
+        
+    Returns:
+        tuple: (title_author_score, other_keyword_score)
     """
-    print("🧪 Testing Author Matching System")
-    print("=" * 50)
+    title_author_score = 0
+    other_keyword_score = 0
+    has_title_author_match = False
     
-    test_cases = [
-        ("L.M. Montgomery", "Lucy Maud Montgomery"),
-        ("J.K. Rowling", "Joanne Kathleen Rowling"),
-        ("Tolkien", "J.R.R. Tolkien"),
-        ("L. Montgomery", "Lucy Montgomery"),
-        ("Montgomery", "L.M. Montgomery"),
-        ("Victor Hugo", "Victor Hugo"),
-        ("V. Hugo", "Victor Hugo"),
-        ("Alexandre Dumas", "A. Dumas"),
-    ]
+    for keyword_key, keyword_values in keyword_items:
+        book_field = book.get(keyword_key)
+        if not book_field:
+            continue
+            
+        is_title_author = keyword_key in title_author_fields
+        
+        # Handle both single keywords (string) and multiple keywords (list)
+        if isinstance(keyword_values, str):
+            # Backward compatibility for single keyword
+            best_match_score = smart_keyword_match(keyword_values, book_field, keyword_key)
+        elif isinstance(keyword_values, list):
+            # New logic for multiple synonymous keywords
+            best_match_score = 0
+            for keyword_variant in keyword_values:
+                match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
+                if match_score > best_match_score:
+                    best_match_score = match_score
+        else:
+            best_match_score = 0
+
+        # If we have a match and it's in title/author fields, mark it
+        if best_match_score > 0 and is_title_author:
+            has_title_author_match = True
+            title_author_score = max(title_author_score, best_match_score)
+        elif best_match_score > 0 and not is_title_author:
+            other_keyword_score = max(other_keyword_score, best_match_score)
     
-    for query, book in test_cases:
-        score = author_similarity_score(query, book)
-        print(f"'{query}' ↔ '{book}' → {score:.3f}")
-    
-    print("=" * 50)
+    # If we have title/author match, return that score and 0 for other
+    # Otherwise return 0 for title/author and the other score
+    if has_title_author_match:
+        return title_author_score, 0
+    else:
+        return 0, other_keyword_score
 
 
-if __name__ == "__main__":
-    # Run tests if script is executed directly
-    test_author_matching()
+def merge_taxonomy_from_books(title_author_matches):
+    """
+    Merge taxonomy from a list of books into a unified structure.
+    
+    Args:
+        title_author_matches (list): List of book dictionaries with classification data
+        
+    Returns:
+        dict: Merged taxonomy structure with all categories from the input books
+    """
+    import json
+    
+    # Initialize the merged taxonomy structure
+    merged_taxonomy = {
+        "Genre Littéraire": {"Fiction": set(), "Non-fiction": set()},
+        "Thèmes - Concepts Clés": {
+            "Société": set(), 
+            "Technologie": set(), 
+            "Relations humaines": set(), 
+            "Épopées et quêtes": set(), 
+            "Philosophie / Métaphysique": set()
+        },
+        "Type de Public": {"Format": set()},
+        "Structure Narrative": {"Point de vue": set(), "Temporalité": set(), "Style": set()},
+        "Personnages / Relations": {"Type de protagoniste": set(), "Relations dominantes": set()}
+    }
+    
+    # Process each book's taxonomy
+    for book in title_author_matches:
+        taxonomy_str = book.get("classification")
+        if taxonomy_str:
+            try:
+                # Parse the JSON string to get the taxonomy dict
+                taxonomy = json.loads(taxonomy_str)
+                
+                # Merge taxonomy categories into the reference structure
+                for main_category, sub_categories in taxonomy.items():
+                    if main_category in merged_taxonomy:
+                        for sub_key, values in sub_categories.items():
+                            if sub_key in merged_taxonomy[main_category]:
+                                if values:  # Only add non-null values
+                                    if isinstance(values, list):
+                                        merged_taxonomy[main_category][sub_key].update(values)
+                                    elif isinstance(values, str):
+                                        merged_taxonomy[main_category][sub_key].add(values)
+            except (json.JSONDecodeError, TypeError):
+                # Skip books with invalid taxonomy data
+                continue
+    
+    # Convert sets back to lists for easier processing
+    for main_category in merged_taxonomy:
+        for sub_key in merged_taxonomy[main_category]:
+            if isinstance(merged_taxonomy[main_category][sub_key], set):
+                merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
+    
+    return merged_taxonomy
+
+
+def calculate_taxonomy_score(merged_taxonomy, book):
+    """
+    Calculate taxonomy matching score for a book against merged taxonomy.
+    
+    Args:
+        merged_taxonomy (dict): Merged taxonomy structure from matching books
+        book (dict): Book data dictionary
+        
+    Returns:
+        int: Taxonomy score
+    """
+    import json
+    
+    taxonomy_score = 0
+    book_taxonomy = {}
+    
+    # Parse book taxonomy
+    if book.get("classification"):
+        try:
+            book_taxonomy = json.loads(book["classification"])
+        except (json.JSONDecodeError, TypeError, KeyError):
+            book_taxonomy = {}
+    
+    # Check taxonomy matches against merged structure
+    if book_taxonomy and merged_taxonomy:
+        for main_category, sub_categories in merged_taxonomy.items():
+            book_main_section = book_taxonomy.get(main_category)
+            if book_main_section:
+                for sub_key, merged_values in sub_categories.items():
+                    if merged_values:  # Only check if merged category has values
+                        book_values = book_main_section.get(sub_key)
+                        if book_values:
+                            if isinstance(book_values, list):
+                                # Count intersections between book values and merged values
+                                matches = set(book_values).intersection(set(merged_values))
+                                taxonomy_score += len(matches)
+                            elif book_values in merged_values:
+                                taxonomy_score += 1
+    
+    return taxonomy_score
+
+
+def find_taxonomy_matches(books_data, merged_taxonomy, title_author_book_ids):
+    """
+    Find books that match the merged taxonomy and score them based on similarity.
+    
+    Args:
+        books_data (list): List of all books to search through
+        merged_taxonomy (dict): Merged taxonomy structure to match against
+        title_author_book_ids (set): Set of book IDs that already matched title/author to exclude
+        
+    Returns:
+        tuple: (taxonomy_matches, max_possible_score) where taxonomy_matches is a list of books 
+               with scores and max_possible_score is the highest score found
+    """
+    taxonomy_matches = []
+    max_possible_score = 0
+    
+    for book in books_data:
+        book_taxonomy = book.get("classification")
+        if not book_taxonomy:
+            continue
+        if book["id"] in title_author_book_ids:
+            continue
+        taxonomy_score = calculate_taxonomy_score(merged_taxonomy, book)
+        max_possible_score = max(max_possible_score, taxonomy_score)
+        if taxonomy_score > 0:
+            book_copy = {**book, "score": taxonomy_score}
+            taxonomy_matches.append(book_copy)
+
+    # Sort by score descending and filter to top-scoring books
+    taxonomy_matches = sorted(taxonomy_matches, key=lambda x: x.get("score", 0), reverse=True)
+    if max_possible_score > 0:
+        taxonomy_matches = [book for book in taxonomy_matches if book.get("score", 0) >= max_possible_score-1]
+    
+    return taxonomy_matches
+
+
+def filter_books_by_keywords(books_data, keyword_items, title_author_fields):
+    """
+    Filter books based on keyword matching and categorize them by match type.
+    
+    Args:
+        books_data (list): List of all books to search through
+        keyword_items (list): List of (field, keywords) tuples from GPT keyword extraction
+        title_author_fields (set): Set of field names considered as title/author fields
+        
+    Returns:
+        tuple: (title_author_matches, other_keyword_matches, best_title_author_score, has_title_or_author)
+               where each match list contains books with their scores
+    """
+    title_author_matches = []
+    other_keyword_matches = []
+    
+    
+    # Single pass through books with optimized scoring
+    for book in books_data:
+        # Early exit if no potential matches
+        has_keywords = any(book.get(kw_key) for kw_key, _ in keyword_items)
+        
+        if not has_keywords:
+            continue
+
+        # Check keyword matches with smart matching (only if has keywords)
+        title_author_score, other_keyword_score = calculate_keyword_score(keyword_items, book, title_author_fields)
+
+        # if title_author_score has score >0 that save in title_author_matches
+        if title_author_score >= 1:
+            book_copy = {**book, "score": title_author_score}
+            title_author_matches.append(book_copy)
+        elif title_author_score == 0 and other_keyword_score > 1:
+            book_copy = {**book, "score": other_keyword_score}
+            other_keyword_matches.append(book_copy)
+
+    # Sort title_author_matches in descending order by score
+    title_author_matches = sorted(title_author_matches, key=lambda x: x.get("score", 0), reverse=True)
+    # sort other_keyword_matches in descending order by score
+    other_keyword_matches = sorted(other_keyword_matches, key=lambda x: x.get("score", 0), reverse=True)
+
+    return title_author_matches, other_keyword_matches
+

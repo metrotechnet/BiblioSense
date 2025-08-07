@@ -14,8 +14,8 @@ dbase/query_log.json
 PHASE2_README.md
 CAPACITY_FINAL_REPORT.md
 DEBUG_OPTIMIZATION.md
-EXEMPLES_REQUETES.md
 SECRET_MANAGER_GUIDE.md
+GUIDE_TESTS.md
 
 # Fichiers favicon (utiliser static/images/favicon.ico à la place)
 static/favicon/
@@ -27,6 +27,10 @@ config.py
 test_phase2.py
 test_gpt_cache.py
 test_no_blocking.py
+test_cache_capacity.py
+capacity_analysis.py
+examples_gpt_cache.py
+test_queries.json
 
 # Fichiers déplacés vers utils/
 gpt_services.py
