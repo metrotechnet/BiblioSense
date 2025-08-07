@@ -340,7 +340,7 @@ def create_app():
             # Extract keywords from user query using cached GPT service
             # This identifies specific fields (title, author, genre, etc.) mentioned in the query
             keywords_result = cached_gpt_keywords(query_text)
-            keyword_items = list(keywords_result["Mots-clés"].items())
+            keyword_items = list(keywords_result["keywords"].items())
             # print in structure format
             print(f"   → Extracted keywords: {json.dumps(keyword_items, ensure_ascii=False)}")
             gpt_keywords_time = time.time() - gpt_start_time
@@ -508,12 +508,17 @@ def create_app():
                         "taxonomy_avg_score": (sum(book.get("score", 0) for book in taxonomy_matches) / len(taxonomy_matches)) if taxonomy_matches else 0
                     }
                 }
-
+            # Clear GPT cache for fresh start (DEBUGGING PURPOSES)
+            if gpt_cache:
+                cache_size_before = len(gpt_cache.cache)
+                gpt_cache.cache.clear()
+                gpt_cache.reset_stats()
+                print(f"🧹 GPT cache cleared at startup ({cache_size_before} entries removed)")
             # ==================== PHASE 9: RESPONSE GENERATION ====================
             # Prepare logging data structure
             log_data = {
                 "Taxonomy": merged_taxonomy, 
-                "Mots-clés": keywords_result["Mots-clés"], 
+                "keywords": keywords_result["keywords"], 
                 "Description": description_result.get("Description", "")
             }
 
