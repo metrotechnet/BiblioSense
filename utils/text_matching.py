@@ -201,7 +201,7 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         if query_lower == book_lower:
             return 1.0
         elif query_lower in book_lower or book_lower in query_lower:
-            return 0.8
+            return 1.0
         else:
             return 0.0
         
@@ -210,36 +210,72 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         try:
             query_pages = int(re.sub(r'\D', '', query_value))
             book_pages = int(re.sub(r'\D', '', book_field))
-            if "plus" in query_value.lower() and book_pages >= query_pages:
-                return 0.8
-            elif "moins" in query_value.lower() and book_pages <= query_pages:
-                return 0.8
-            elif abs(query_pages - book_pages) <= 10:
-                return 0.9
+            
+            # French/English variants for "more than" / "plus de"
+            more_than_patterns = ["plus", "plus de", "plus que", "more than", "more", "over", "above", "minimum"]
+            # French/English variants for "less than" / "moins de"
+            less_than_patterns = ["moins", "moins de", "moins que", "less than", "less", "under", "below", "maximum", "max"]
+            
+            query_lower = query_value.lower()
+            
+            # Check if query contains "more than" variants
+            if any(pattern in query_lower for pattern in more_than_patterns):
+                if book_pages >= query_pages:
+                    return 1.0
+                else:
+                    return 0.0
+            # Check if query contains "less than" variants
+            elif any(pattern in query_lower for pattern in less_than_patterns):
+                if book_pages <= query_pages:
+                    return 1.0
+                else:
+                    return 0.0
+            # Exact match or range (no comparison keywords)
             else:
-                return 0.0
+                if abs(query_pages - book_pages) <= 10:
+                    return 1.0 if query_pages == book_pages else 0.9
+                else:
+                    return 0.0
         except ValueError:
             return 0.0
         
-    # for all other fields, do simple substring match with some weighting
+    # For publication years with French/English variants
     elif field_name.lower() in ["parution", "publication year", "année de parution"]:
         try:
             query_year = int(re.sub(r'\D', '', query_value))
             book_year = int(re.sub(r'\D', '', book_field))
-            if "plus" in query_value.lower() and book_year >= query_year:
-                return 0.0
-            elif "moins" in query_value.lower() and book_year <= query_year:
-                return 0.0
-            elif query_year == book_year:
-                return 0.9
+            
+            # French/English variants for "after" / "après"
+            after_patterns = ["après", "apres", "after", "since", "from", "starting", "minimum", "plus récent", "plus recent"]
+            # French/English variants for "before" / "avant"
+            before_patterns = ["avant", "before", "until", "prior", "maximum", "max", "plus ancien", "older"]
+            
+            query_lower = query_value.lower()
+            
+            # Check if query contains "after" variants
+            if any(pattern in query_lower for pattern in after_patterns):
+                if book_year >= query_year:
+                    return 1.0
+                else:
+                    return 0.0
+            # Check if query contains "before" variants
+            elif any(pattern in query_lower for pattern in before_patterns):
+                if book_year <= query_year:
+                    return 1.0
+                else:
+                    return 0.0
+            # Exact year match (no comparison keywords)
             else:
-                return 0.0
+                if query_year == book_year:
+                    return 1.0
+                else:
+                    return 0.0
         except ValueError:
             return 0.0
         
     elif field_name.lower() in ["langue", "language"]:
         if query_lower == book_lower:
-            return 0.9
+            return 1.0
         elif query_lower in book_lower or book_lower in query_lower:
             return 0.8
         else:
@@ -247,7 +283,7 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         
     elif field_name.lower() in ["editeur", "publisher"]:
         if query_lower == book_lower:
-            return 0.9
+            return 1.0
         elif query_lower in book_lower or book_lower in query_lower:
             return 0.8
         else:
@@ -321,6 +357,12 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
                         resume_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
                         if resume_score > best_match_score:
                             best_match_score = resume_score
+                description_field = book.get('description')
+                if description_field:
+                    for keyword_variant in keyword_values:
+                        description_score = smart_keyword_match(keyword_variant, description_field, 'description')
+                        if description_score > best_match_score:
+                            best_match_score = description_score
         else:
             best_match_score = 0
 
