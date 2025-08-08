@@ -382,7 +382,7 @@ def create_app():
                 filtered_books = []
 
             # Strategy 3: No title/author matches, check for other keywords
-            elif has_title_or_author==False and len(other_keyword_matches) > 0:
+            elif len(other_keyword_matches) > 0:
                 print("🤔 Strategy: No title/author, using GPT taxonomy")
                 # Not confident about title/author matches, rely on GPT classification
                 merged_taxonomy = []
@@ -397,10 +397,11 @@ def create_app():
 
 
             # Normalize taxonomy format (convert sets to lists for JSON serialization)
-            for main_category in merged_taxonomy:
-                for sub_key in merged_taxonomy[main_category]:
-                    if isinstance(merged_taxonomy[main_category][sub_key], set):
-                        merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
+            if len(merged_taxonomy) > 0:
+                for main_category in merged_taxonomy:
+                    for sub_key in merged_taxonomy[main_category]:
+                        if isinstance(merged_taxonomy[main_category][sub_key], set):
+                            merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
 
             # print merged taxonomy for debugging
             # print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
@@ -508,12 +509,7 @@ def create_app():
                         "taxonomy_avg_score": (sum(book.get("score", 0) for book in taxonomy_matches) / len(taxonomy_matches)) if taxonomy_matches else 0
                     }
                 }
-            # Clear GPT cache for fresh start (DEBUGGING PURPOSES)
-            if gpt_cache:
-                cache_size_before = len(gpt_cache.cache)
-                gpt_cache.cache.clear()
-                gpt_cache.reset_stats()
-                print(f"🧹 GPT cache cleared at startup ({cache_size_before} entries removed)")
+
             # ==================== PHASE 9: RESPONSE GENERATION ====================
             # Prepare logging data structure
             log_data = {

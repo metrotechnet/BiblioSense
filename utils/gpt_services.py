@@ -347,7 +347,7 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
 
 
     # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
-    prompt = f"""Extrait UN SEUL mot-clé de recherche de cette requête de livre. Identifie le champ le plus pertinent uniquement.
+    prompt = f"""Extrait les mots-clés de recherche de cette requête de livre. Identifie le champ le plus pertinent uniquement.
 
         Requête: "{text}"
         Champs: titre, auteur, resume, editeur, langue, categorie, parution, pages

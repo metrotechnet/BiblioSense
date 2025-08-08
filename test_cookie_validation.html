@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cookie Validation - BiblioSense</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/bibliosense.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🍪 Test Cookie Validation</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cookie Validation Test Page</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Cette page teste le système de validation des cookies de BiblioSense.</p>
+                        
+                        <div class="mb-3">
+                            <button id="test-cookies" class="btn btn-primary">Tester les cookies</button>
+                            <button id="clear-cookies" class="btn btn-warning">Effacer tous les cookies</button>
+                            <button id="show-consent" class="btn btn-info">Afficher le consentement</button>
+                        </div>
+                        
+                        <div id="test-results" class="mt-3"></div>
+                        
+                        <h6>État actuel des cookies:</h6>
+                        <div id="cookie-status" class="border p-3 bg-light">
+                            <p>Chargement...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/domService.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cookie validation
+            domService.initializeCookieValidation();
+            
+            // Update cookie status display
+            updateCookieStatus();
+            
+            // Test buttons
+            document.getElementById('test-cookies').addEventListener('click', function() {
+                const isValid = domService.cookieService.validateCookies();
+                const results = document.getElementById('test-results');
+                results.innerHTML = `
+                    <div class="alert ${isValid ? 'alert-success' : 'alert-danger'}">
+                        <strong>Résultat:</strong> ${isValid ? '✅ Cookies valides' : '❌ Cookies invalides'}
+                    </div>
+                `;
+                updateCookieStatus();
+            });
+            
+            document.getElementById('clear-cookies').addEventListener('click', function() {
+                // Clear all BiblioSense cookies
+                domService.cookieService.deleteCookie('bibliosense_cookie_consent');
+                domService.cookieService.deleteCookie('bibliosense_first_visit');
+                domService.cookieService.deleteCookie('bibliosense_preferences');
+                
+                const results = document.getElementById('test-results');
+                results.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Cookies effacés!</strong> Rechargez la page pour tester.
+                    </div>
+                `;
+                updateCookieStatus();
+            });
+            
+            document.getElementById('show-consent').addEventListener('click', function() {
+                domService.showCookieConsentBanner();
+            });
+        });
+        
+        function updateCookieStatus() {
+            const statusDiv = document.getElementById('cookie-status');
+            const consent = domService.cookieService.getCookie('bibliosense_cookie_consent');
+            const firstVisit = domService.cookieService.getCookie('bibliosense_first_visit');
+            const preferences = domService.cookieService.getCookie('bibliosense_preferences');
+            const cookiesEnabled = domService.cookieService.areCookiesEnabled();
+            
+            statusDiv.innerHTML = `
+                <p><strong>Cookies activés:</strong> ${cookiesEnabled ? '✅ Oui' : '❌ Non'}</p>
+                <p><strong>Consentement:</strong> ${consent || '❌ Non défini'}</p>
+                <p><strong>Première visite:</strong> ${firstVisit || '❌ Non défini'}</p>
+                <p><strong>Préférences:</strong> ${preferences ? '✅ Définies' : '❌ Non définies'}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

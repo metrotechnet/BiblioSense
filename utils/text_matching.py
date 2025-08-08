@@ -6,6 +6,7 @@ Fonctions utilitaires pour la correspondance intelligente de texte,
 spécialement optimisées pour les noms d'auteurs et la recherche de livres.
 """
 
+from multiprocessing.util import debug
 import re
 import unicodedata
 
@@ -113,14 +114,14 @@ def author_similarity_score(query_author, book_author):
     
     # If one is contained in the other (for partial matches)
     if norm_query in norm_book or norm_book in norm_query:
-        return 0.8
+        return 1.0
     
     # Extract components for more sophisticated matching
     query_parts = extract_initials_and_names(query_author)
     book_parts = extract_initials_and_names(book_author)
     
     score = 0.0
-    max_possible_score = 0.0
+    max_possible_score = 0.6
     
     # Check last names match (highest weight)
     if query_parts['last_names'] and book_parts['last_names']:
@@ -164,14 +165,7 @@ def author_similarity_score(query_author, book_author):
     if max_possible_score > 0:
         return min(score / max_possible_score, 1.0)
     
-    # Fallback: check if any words match
-    query_words = set(norm_query.split())
-    book_words = set(norm_book.split())
-    common_words = query_words.intersection(book_words)
-    
-    if common_words:
-        return len(common_words) / max(len(query_words), len(book_words)) * 0.5
-    
+   
     return 0.0
 
 

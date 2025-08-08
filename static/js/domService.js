@@ -6,6 +6,130 @@ let originalBtnHTML = "";
 // domService provides utility functions for DOM manipulation related to book lists and UI feedback
 const domService = {
     /**
+     * Cookie validation and management functions
+     */
+    cookieService: {
+        /**
+         * Set a cookie with name, value, and expiration days
+         * @param {string} name - Cookie name
+         * @param {string} value - Cookie value  
+         * @param {number} days - Days until expiration
+         */
+        setCookie(name, value, days = 30) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = `${name}=${value};${expires};path=/;SameSite=Strict`;
+        },
+
+        /**
+         * Get a cookie value by name
+         * @param {string} name - Cookie name
+         * @returns {string|null} - Cookie value or null if not found
+         */
+        getCookie(name) {
+            const nameEQ = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i];
+                while (cookie.charAt(0) === ' ') {
+                    cookie = cookie.substring(1, cookie.length);
+                }
+                if (cookie.indexOf(nameEQ) === 0) {
+                    return cookie.substring(nameEQ.length, cookie.length);
+                }
+            }
+            return null;
+        },
+
+        /**
+         * Check if cookies are enabled in the browser
+         * @returns {boolean} - True if cookies are enabled
+         */
+        areCookiesEnabled() {
+            // Try to set a test cookie
+            this.setCookie('test_cookie', 'test_value', 1);
+            const testValue = this.getCookie('test_cookie');
+            
+            // Clean up test cookie
+            if (testValue) {
+                this.deleteCookie('test_cookie');
+                return true;
+            }
+            return false;
+        },
+
+        /**
+         * Delete a cookie by name
+         * @param {string} name - Cookie name
+         */
+        deleteCookie(name) {
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Strict`;
+        },
+
+        /**
+         * Validate cookies and show appropriate notices
+         * @returns {boolean} - True if cookies are valid and enabled
+         */
+        validateCookies() {
+            // Check if cookies are enabled
+            if (!this.areCookiesEnabled()) {
+                domService.showCookieWarning();
+                return false;
+            }
+
+            // Check for cookie consent
+            const consent = this.getCookie('bibliosense_cookie_consent');
+            if (!consent) {
+                domService.showCookieConsentBanner();
+                return false;
+            }
+
+            // Check for first visit
+            const firstVisit = this.getCookie('bibliosense_first_visit');
+            if (!firstVisit) {
+                this.setCookie('bibliosense_first_visit', 'false', 365);
+            }
+
+            // Check for user preferences cookie
+            const userPrefs = this.getCookie('bibliosense_preferences');
+            if (!userPrefs) {
+                // Set default preferences
+                const defaultPrefs = JSON.stringify({
+                    theme: 'light',
+                    itemsPerPage: 20,
+                    language: 'fr',
+                    lastVisit: new Date().toISOString()
+                });
+                this.setCookie('bibliosense_preferences', defaultPrefs, 365);
+            } else {
+                // Update last visit
+                try {
+                    const prefs = JSON.parse(userPrefs);
+                    prefs.lastVisit = new Date().toISOString();
+                    this.setCookie('bibliosense_preferences', JSON.stringify(prefs), 365);
+                } catch (e) {
+                    console.warn('Could not update user preferences:', e);
+                }
+            }
+
+            return true;
+        },
+
+        /**
+         * Set cookie consent
+         * @param {boolean} accepted - Whether user accepted cookies
+         */
+        setCookieConsent(accepted) {
+            this.setCookie('bibliosense_cookie_consent', accepted ? 'accepted' : 'declined', 365);
+            
+            if (accepted) {
+                // Initialize other cookies
+                domService.initializeCookieValidation();
+            }
+        }
+    },
+    /**
      * Display an error message inside a specified container.
      * @param {string} message - The error message to display.
      * @param {string} containerId - The ID of the container element.
@@ -25,6 +149,163 @@ const domService = {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = `<div class="alert alert-success" role="alert">${message}</div>`;
+    },
+
+    /**
+     * Display a cookie warning when cookies are disabled
+     */
+    showCookieWarning() {
+        const warningDiv = document.createElement('div');
+        warningDiv.id = 'cookie-warning';
+        warningDiv.className = 'alert alert-warning alert-dismissible';
+        warningDiv.style.position = 'fixed';
+        warningDiv.style.top = '0';
+        warningDiv.style.left = '0';
+        warningDiv.style.right = '0';
+        warningDiv.style.zIndex = '9999';
+        warningDiv.style.margin = '0';
+        warningDiv.style.borderRadius = '0';
+        
+        warningDiv.innerHTML = `
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>⚠️ Cookies désactivés</strong><br>
+                        <small>BiblioSense nécessite les cookies pour fonctionner correctement. 
+                        Veuillez activer les cookies dans votre navigateur.</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertBefore(warningDiv, document.body.firstChild);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (document.getElementById('cookie-warning')) {
+                warningDiv.remove();
+            }
+        }, 10000);
+    },
+
+    
+    /**
+     * Display cookie consent banner
+     */
+    showCookieConsentBanner() {
+        const bannerDiv = document.createElement('div');
+        bannerDiv.id = 'cookie-consent-banner';
+        bannerDiv.className = 'alert alert-dark';
+        bannerDiv.style.position = 'fixed';
+        bannerDiv.style.bottom = '0';
+        bannerDiv.style.left = '0';
+        bannerDiv.style.right = '0';
+        bannerDiv.style.zIndex = '9999';
+        bannerDiv.style.margin = '0';
+        bannerDiv.style.borderRadius = '0';
+        bannerDiv.style.borderTop = '3px solid #007bff';
+        
+        bannerDiv.innerHTML = `
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8 col-12 mb-2 mb-md-0">
+                        <div class="d-flex align-items-center">
+                            <span style="font-size: 1.5rem; margin-right: 10px;">🍪</span>
+                            <div>
+                                <strong>Utilisation des cookies</strong><br>
+                                <small>BiblioSense utilise des cookies pour mémoriser vos préférences et améliorer votre expérience. 
+                                En continuant, vous acceptez notre utilisation des cookies.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-12 text-md-end">
+                        <button id="accept-cookies" class="btn btn-primary btn-sm me-2">Accepter</button>
+                        <button id="decline-cookies" class="btn btn-outline-secondary btn-sm">Refuser</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(bannerDiv);
+        
+        // Add event listeners
+        document.getElementById('accept-cookies').addEventListener('click', () => {
+            this.cookieService.setCookieConsent(true);
+            bannerDiv.remove();
+            this.showSuccess('✅ Cookies acceptés. Merci!');
+            setTimeout(() => this.clearContainer(), 3000);
+        });
+        
+        document.getElementById('decline-cookies').addEventListener('click', () => {
+            this.cookieService.setCookieConsent(false);
+            bannerDiv.remove();
+            this.showCookieDeclinedNotice();
+        });
+    },
+
+    /**
+     * Show notice when cookies are declined
+     */
+    showCookieDeclinedNotice() {
+        const noticeDiv = document.createElement('div');
+        noticeDiv.id = 'cookie-declined-notice';
+        noticeDiv.className = 'alert alert-warning';
+        noticeDiv.style.position = 'fixed';
+        noticeDiv.style.bottom = '0';
+        noticeDiv.style.left = '0';
+        noticeDiv.style.right = '0';
+        noticeDiv.style.zIndex = '9999';
+        noticeDiv.style.margin = '0';
+        noticeDiv.style.borderRadius = '0';
+        
+        noticeDiv.innerHTML = `
+            <div class="container">
+                <div class="text-center">
+                    <strong>⚠️ Cookies refusés</strong><br>
+                    <small>Certaines fonctionnalités peuvent être limitées. Vous pouvez modifier ce choix dans les paramètres.</small>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(noticeDiv);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (document.getElementById('cookie-declined-notice')) {
+                noticeDiv.remove();
+            }
+        }, 5000);
+    },
+
+    /**
+     * Initialize cookie validation on page load
+     * @returns {boolean} - True if cookies are properly validated
+     */
+    initializeCookieValidation() {
+        console.log('🍪 Initializing cookie validation...');
+        
+        const isValid = this.cookieService.validateCookies();
+        
+        if (isValid) {
+            console.log('✅ Cookies validated successfully');
+            
+            // Load user preferences if available
+            const prefsString = this.cookieService.getCookie('bibliosense_preferences');
+            if (prefsString) {
+                try {
+                    const prefs = JSON.parse(prefsString);
+                    console.log('📋 User preferences loaded:', prefs);
+                    // Apply preferences here if needed
+                } catch (e) {
+                    console.warn('⚠️ Could not parse user preferences:', e);
+                }
+            }
+        } else {
+            console.warn('❌ Cookie validation failed');
+        }
+        
+        return isValid;
     },
 
     /**
@@ -410,7 +691,7 @@ const domService = {
                     this.displayBookDetails(book, item, leftCol);
                     console.log(`Image timeout for: ${book.couverture}`);
                 }
-            }, 500); // 500 millisecond timeout
+            }, 100); // 100 millisecond timeout
 
             leftCol.appendChild(img);
         }

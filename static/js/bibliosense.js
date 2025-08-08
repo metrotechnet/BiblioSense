@@ -22,9 +22,17 @@
 // Wait for the DOM to be fully loaded before running scripts
 document.addEventListener("DOMContentLoaded", async function () {
     try {
+        // Initialize cookie validation first
+        const cookiesValid = domService.initializeCookieValidation();
+        
+        if (!cookiesValid) {
+            console.warn('Cookie validation failed, but continuing with limited functionality');
+        }
+        
         // Show welcome instructions by default (already in HTML)
         showWelcomeInstructions();
     } catch (error) {
+        console.error('Error during application initialization:', error);
         domService.showError("Erreur lors du chargement de l'application. Veuillez réessayer plus tard.");
     }
 
@@ -62,7 +70,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             } catch (error) {
                 domService.showError("Erreur lors de la recherche. Veuillez réessayer.");
+                // Stop spinner after search is complete    
                 domService.stopSpinner();
+                // Clear the search input field
+                searchInput.value = "";
             }
         });
 

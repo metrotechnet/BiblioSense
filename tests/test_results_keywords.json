@@ -1,0 +1,1515 @@
+{
+  "test_metadata": {
+    "total_queries": 82,
+    "successful_tests": 82,
+    "failed_tests": 0,
+    "test_date": "2025-08-08",
+    "function_tested": "get_keywords_with_gpt"
+  },
+  "test_results": [
+    {
+      "query": "Je cherche des romans de science-fiction",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "science-fiction",
+            "SF",
+            "futuriste"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Avez-vous des livres de fantasy épique ?",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "fantasy épique",
+            "fantasy",
+            "épopée"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je veux lire un thriller psychologique",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "thriller",
+            "psychologique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Pouvez-vous me recommander un roman historique ?",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "roman",
+            "historique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je recherche des livres de romance contemporaine",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romance contemporaine",
+            "romance",
+            "fiction romantique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Montrez-moi des romans policiers français",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "roman policier",
+            "polar",
+            "thriller"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je cherche des livres de développement personnel",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "développement personnel",
+            "croissance personnelle",
+            "bien-être",
+            "épanouissement"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Avez-vous des biographies d'entrepreneurs ?",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "biographies",
+            "entrepreneurs"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je veux des livres sur l'histoire de France",
+      "gpt_result": {
+        "keywords": {
+          "resume": [
+            "histoire de France",
+            "histoire",
+            "France"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Recherchez des ouvrages de philosophie moderne",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "philosophie moderne",
+            "philosophie contemporaine"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je cherche des livres de cuisine végétarienne",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "cuisine végétarienne",
+            "cuisine sans viande",
+            "cuisine végétale"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Montrez-moi des guides de voyage en Europe",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "guide de voyage",
+            "voyage",
+            "tourisme"
+          ],
+          "resume": [
+            "Europe",
+            "destinations",
+            "itinéraires"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres de Victor Hugo",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Victor Hugo"
+          ],
+          "categorie": [
+            "littérature",
+            "roman",
+            "poésie"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Œuvres complètes d'Agatha Christie",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Agatha Christie"
+          ],
+          "categorie": [
+            "roman policier",
+            "mystère"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans de Stephen King",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Stephen King"
+          ],
+          "categorie": [
+            "roman",
+            "fiction",
+            "horreur",
+            "thriller"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je cherche les derniers livres de Guillaume Musso",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Guillaume Musso"
+          ],
+          "parution": [
+            "derniers"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Avez-vous des livres de Amélie Nothomb ?",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Amélie Nothomb"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Montrez-moi tout de Paulo Coelho",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Paulo Coelho"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Le Petit Prince",
+      "gpt_result": {
+        "keywords": {
+          "titre": [
+            "Le Petit Prince"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "1984 de George Orwell",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "George Orwell"
+          ],
+          "categorie": [
+            "dystopie",
+            "roman politique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "L'Étranger de Camus",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [
+            "Camus"
+          ],
+          "categorie": [
+            "roman",
+            "littérature",
+            "existentialisme"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Harry Potter à l'école des sorciers",
+      "gpt_result": {
+        "keywords": {
+          "titre": [
+            "Harry Potter à l'école des sorciers"
+          ],
+          "categorie": [
+            "fantasy",
+            "magie",
+            "aventure"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Da Vinci Code",
+      "gpt_result": {
+        "keywords": {
+          "titre": [
+            "Da Vinci Code"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres sur l'intelligence artificielle",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "intelligence artificielle",
+            "IA",
+            "technologie",
+            "informatique"
+          ],
+          "resume": [
+            "intelligence artificielle",
+            "apprentissage automatique",
+            "algorithmes",
+            "robotique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans sur la Seconde Guerre mondiale",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "roman",
+            "littérature de guerre"
+          ],
+          "resume": [
+            "Seconde Guerre mondiale",
+            "conflit mondial",
+            "histoire"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres de management d'équipe",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "management",
+            "leadership",
+            "gestion d'équipe"
+          ],
+          "resume": [
+            "management d'équipe",
+            "travail d'équipe",
+            "collaboration"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres d'apprentissage du français",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "apprentissage",
+            "français",
+            "langue"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Guides pour créer une entreprise",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "entrepreneuriat",
+            "création d'entreprise",
+            "business"
+          ],
+          "resume": [
+            "guides",
+            "création",
+            "entreprise"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres en anglais pour débutants",
+      "gpt_result": {
+        "keywords": {
+          "langue": [
+            "anglais"
+          ],
+          "categorie": [
+            "débutants",
+            "initiation",
+            "apprentissage"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans français contemporains",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "roman",
+            "littérature contemporaine"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres en espagnol niveau intermédiaire",
+      "gpt_result": {
+        "keywords": {
+          "langue": [
+            "espagnol"
+          ],
+          "categorie": [
+            "intermédiaire",
+            "niveau"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Ouvrages en italien sur l'art",
+      "gpt_result": {
+        "keywords": {
+          "langue": [
+            "italien"
+          ],
+          "categorie": [
+            "art",
+            "beaux-arts",
+            "esthétique"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres bilingues français-anglais",
+      "gpt_result": {
+        "keywords": {
+          "langue": [
+            "français",
+            "anglais"
+          ],
+          "categorie": [
+            "bilingue",
+            "langues",
+            "éducation"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres courts de moins de 200 pages",
+      "gpt_result": {
+        "keywords": {
+          "pages": [
+            "moins de 200 pages"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans volumineux de plus de 500 pages",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romans",
+            "littérature"
+          ],
+          "pages": [
+            "plus de 500 pages"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Nouvelles et recueils de contes",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "nouvelles",
+            "contes",
+            "récits",
+            "fiction"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres audio disponibles",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "general"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "BD et romans graphiques",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "BD",
+            "romans graphiques",
+            "bande dessinée",
+            "graphic novels"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres universitaires en économie",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "économie",
+            "sciences économiques"
+          ],
+          "resume": [
+            "livres universitaires",
+            "éducation supérieure"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Manuels de mathématiques niveau lycée",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "manuels",
+            "mathématiques",
+            "lycée"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Ouvrages de référence en droit",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "droit",
+            "juridique",
+            "législation",
+            "référence"
+          ],
+          "resume": [
+            "ouvrages",
+            "référence",
+            "droit"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres de médecine générale",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "médecine",
+            "santé",
+            "médecine générale"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Traités de psychologie cognitive",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "psychologie",
+            "cognitive"
+          ],
+          "resume": [
+            "traités",
+            "psychologie cognitive"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres publiés cette année",
+      "gpt_result": {
+        "keywords": {
+          "parution": [
+            "cette année"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Classiques du 19ème siècle",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "classiques",
+            "littérature",
+            "19ème siècle"
+          ],
+          "parution": [
+            "19ème siècle"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Nouveautés de 2024",
+      "gpt_result": {
+        "keywords": {
+          "parution": [
+            "2024"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres des années 1990",
+      "gpt_result": {
+        "keywords": {
+          "parution": [
+            "années 1990"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Œuvres du siècle des Lumières",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "philosophie",
+            "littérature",
+            "époque des Lumières"
+          ],
+          "resume": [
+            "siècle des Lumières",
+            "pensée éclairée",
+            "rationalisme"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres Prix Goncourt",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "prix littéraire",
+            "Goncourt"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Best-sellers actuels",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "best-sellers",
+            "livres populaires"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres adaptés au cinéma",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "adaptation",
+            "cinéma",
+            "films"
+          ],
+          "resume": [
+            "livres adaptés",
+            "adaptations littéraires"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Prix Nobel de littérature",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "littérature",
+            "prix",
+            "récompense"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres recommandés par les critiques",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "livres",
+            "critiques",
+            "recommandés"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Roman policier français publié après 2020",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "roman policier",
+            "polar",
+            "thriller"
+          ],
+          "parution": [
+            "après 2020"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livre de cuisine végétarienne en français de moins de 300 pages",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "cuisine végétarienne",
+            "recettes végétariennes"
+          ],
+          "langue": [
+            "français"
+          ],
+          "pages": [
+            "moins de 300 pages"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Biographie d'un scientifique traduite de l'anglais",
+      "gpt_result": {
+        "keywords": {
+          "resume": [
+            "biographie",
+            "scientifique"
+          ],
+          "langue": [
+            "anglais"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Roman de science-fiction écrit par une femme",
+      "gpt_result": {
+        "keywords": {
+          "auteur": [],
+          "categorie": [
+            "science-fiction",
+            "SF",
+            "roman futuriste"
+          ],
+          "resume": [],
+          "langue": [],
+          "parution": []
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livre de développement personnel avec plus de 4 étoiles",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "développement personnel",
+            "croissance personnelle"
+          ],
+          "resume": [
+            "livre",
+            "étoiles",
+            "évaluation"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres qui parlent d'amitié",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "amitié",
+            "relations",
+            "liens sociaux"
+          ],
+          "resume": [
+            "thème de l'amitié",
+            "concept d'amitié"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans sur le voyage dans le temps",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "science-fiction",
+            "fantastique",
+            "voyage dans le temps"
+          ],
+          "resume": [
+            "voyage",
+            "temps",
+            "temporalité"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Ouvrages traitant de l'écologie",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "écologie",
+            "environnement",
+            "durabilité"
+          ],
+          "resume": [
+            "écologie",
+            "sustainability",
+            "biodiversité"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres sur l'art de vivre",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "art de vivre",
+            "bien-être",
+            "style de vie"
+          ],
+          "resume": [
+            "philosophie de vie",
+            "épanouissement personnel",
+            "équilibre"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans avec des dragons",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "fantasy",
+            "sword and sorcery",
+            "high fantasy"
+          ],
+          "resume": [
+            "dragons",
+            "créatures mythiques",
+            "aventures épiques"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres sur l'entrepreneuriat féminin",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "entrepreneuriat",
+            "femmes",
+            "entrepreneuriat féminin"
+          ],
+          "resume": [
+            "entrepreneuriat",
+            "femmes",
+            "leadership féminin",
+            "business au féminin"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je veux quelque chose de léger et drôle",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "comédie",
+            "humour",
+            "légèreté"
+          ],
+          "resume": [
+            "léger",
+            "drôle",
+            "amusant"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Un livre pour me motiver",
+      "gpt_result": {
+        "keywords": {
+          "resume": [
+            "motivation",
+            "inspiration",
+            "encouragement"
+          ],
+          "categorie": [
+            "développement personnel",
+            "bien-être"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans tristes qui font pleurer",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romans",
+            "littérature",
+            "fiction",
+            "drame"
+          ],
+          "resume": [
+            "tristesse",
+            "émotion",
+            "pleurs",
+            "sensation"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres inspirants sur le succès",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "développement personnel",
+            "motivation",
+            "réussite"
+          ],
+          "resume": [
+            "succès",
+            "inspiration"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Quelque chose de mystérieux et intriguant",
+      "gpt_result": {
+        "keywords": {
+          "resume": [
+            "mystérieux",
+            "intriguant",
+            "suspense",
+            "énigme"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Un livre réconfortant pour l'hiver",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "réconfortant",
+            "hiver",
+            "livre"
+          ],
+          "resume": [
+            "réconfort",
+            "hiver"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Je cherche des romans de science-fiction français",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "science-fiction",
+            "SF"
+          ],
+          "langue": [
+            "français"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres de développement personnel de moins de 250 pages",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "développement personnel",
+            "croissance personnelle"
+          ],
+          "pages": [
+            "moins de 250 pages"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans policiers avec des enquêtrices femmes",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romans policiers",
+            "enquêtes",
+            "thrillers"
+          ],
+          "resume": [
+            "enquêtrices femmes",
+            "femmes détectives"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Biographies d'artistes peintres",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "biographie",
+            "artistes",
+            "peintres"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Un livre pour comprendre les rêves",
+      "gpt_result": {
+        "keywords": {
+          "resume": [
+            "compréhension",
+            "rêves",
+            "interprétation des rêves"
+          ],
+          "categorie": [
+            "psychologie",
+            "développement personnel",
+            "spiritualité"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans qui se passent dans l'espace",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "science-fiction",
+            "space opera",
+            "romans de l'espace"
+          ],
+          "resume": [
+            "romans",
+            "espace",
+            "univers",
+            "exploration spatiale"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres sur les secrets de cuisine de grand-mère",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "cuisine",
+            "gastronomie",
+            "secrets de grand-mère"
+          ],
+          "resume": [
+            "secrets de cuisine",
+            "recettes traditionnelles"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Histoire des inventions qui ont changé le monde",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "histoire",
+            "inventions",
+            "technologie",
+            "innovation"
+          ],
+          "resume": [
+            "inventions",
+            "impact",
+            "changement",
+            "monde"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans avec des héros non conventionnels",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romans",
+            "littérature",
+            "fiction"
+          ],
+          "resume": [
+            "héros non conventionnels",
+            "personnages atypiques",
+            "protagonistes originaux"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Guides pour voyager avec un petit budget",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "voyage",
+            "budget",
+            "tourisme économique"
+          ],
+          "resume": [
+            "voyager",
+            "petit budget",
+            "économie"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Livres sur les légendes urbaines",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "légendes urbaines",
+            "mythes modernes",
+            "récits populaires"
+          ],
+          "resume": [
+            "légendes",
+            "histoires urbaines",
+            "folklore contemporain"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    },
+    {
+      "query": "Romans épistolaires (écrits sous forme de lettres)",
+      "gpt_result": {
+        "keywords": {
+          "categorie": [
+            "romans épistolaires",
+            "écrits sous forme de lettres"
+          ]
+        }
+      },
+      "status": "success",
+      "expected_result": null,
+      "validation_notes": "",
+      "test_passed": null
+    }
+  ]
+}

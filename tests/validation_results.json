@@ -1,0 +1,196 @@
+{
+  "validation_summary": {
+    "total_tests": 6,
+    "passed_tests": 4,
+    "average_score": 74.33333333333333,
+    "pass_rate": 66.66666666666666
+  },
+  "detailed_results": [
+    {
+      "query": "Je cherche des romans de science-fiction",
+      "expected": {
+        "keywords": {
+          "auteur": [
+            "science",
+            "science"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "auteur": [
+            "science",
+            "science"
+          ]
+        }
+      },
+      "validation": {
+        "score": 100,
+        "max_score": 100,
+        "details": {
+          "field_match": "✅ Champ(s) correct(s)",
+          "keyword_quality": "Score qualité: 40/40",
+          "format": "✅ Format JSON correct"
+        },
+        "passed": true,
+        "notes": []
+      }
+    },
+    {
+      "query": "Livres de Victor Hugo",
+      "expected": {
+        "keywords": {
+          "auteur": [
+            "Victor Hugo",
+            "Hugo"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "auteur": "Victor Hugo"
+        }
+      },
+      "validation": {
+        "score": 40,
+        "max_score": 100,
+        "details": {
+          "field_match": "✅ Champ(s) correct(s)",
+          "keyword_quality": "Score qualité: 0/40",
+          "format": "❌ Format JSON incorrect"
+        },
+        "passed": false,
+        "notes": []
+      }
+    },
+    {
+      "query": "Le Petit Prince",
+      "expected": {
+        "keywords": {
+          "titre": [
+            "Le Petit Prince",
+            "Petit Prince"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "auteur": [
+            "Le Petit Prince",
+            "Petit Prince"
+          ]
+        }
+      },
+      "validation": {
+        "score": 20,
+        "max_score": 100,
+        "details": {
+          "field_match": "❌ Champ incorrect",
+          "keyword_quality": "Score qualité: 0/40",
+          "format": "✅ Format JSON correct"
+        },
+        "passed": false,
+        "notes": [
+          "Attendu: ['titre'], Reçu: ['auteur']"
+        ]
+      }
+    },
+    {
+      "query": "Livres en anglais pour débutants",
+      "expected": {
+        "keywords": {
+          "langue": [
+            "anglais",
+            "english"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "langue": [
+            "anglais",
+            "english"
+          ]
+        }
+      },
+      "validation": {
+        "score": 100,
+        "max_score": 100,
+        "details": {
+          "field_match": "✅ Champ(s) correct(s)",
+          "keyword_quality": "Score qualité: 40/40",
+          "format": "✅ Format JSON correct"
+        },
+        "passed": true,
+        "notes": []
+      }
+    },
+    {
+      "query": "Livres courts de moins de 200 pages",
+      "expected": {
+        "keywords": {
+          "pages": [
+            "moins de 200",
+            "court",
+            "bref"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "pages": [
+            "moins de 200",
+            "court",
+            "variante",
+            "synonyme"
+          ]
+        }
+      },
+      "validation": {
+        "score": 86,
+        "max_score": 100,
+        "details": {
+          "field_match": "✅ Champ(s) correct(s)",
+          "keyword_quality": "Score qualité: 26/40",
+          "format": "✅ Format JSON correct"
+        },
+        "passed": true,
+        "notes": []
+      }
+    },
+    {
+      "query": "Roman policier français publié après 2020",
+      "expected": {
+        "keywords": {
+          "categorie": [
+            "policier",
+            "polar",
+            "crime",
+            "enquête"
+          ]
+        }
+      },
+      "actual": {
+        "keywords": {
+          "categorie": [
+            "policier",
+            "polar",
+            "crime",
+            "enquête"
+          ]
+        }
+      },
+      "validation": {
+        "score": 100,
+        "max_score": 100,
+        "details": {
+          "field_match": "✅ Champ(s) correct(s)",
+          "keyword_quality": "Score qualité: 40/40",
+          "format": "✅ Format JSON correct"
+        },
+        "passed": true,
+        "notes": []
+      }
+    }
+  ]
+}

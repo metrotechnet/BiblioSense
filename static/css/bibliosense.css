@@ -293,3 +293,110 @@ body {
     padding: 10px 5px !important;
   }
 }
+
+/* Cookie notification styling */
+#cookie-warning {
+    animation: slideDown 0.5s ease-out;
+    border-left: 4px solid #f39c12 !important;
+}
+
+#first-visit-notice {
+    animation: slideInRight 0.5s ease-out;
+    border-left: 4px solid #17a2b8 !important;
+}
+
+#cookie-consent-banner {
+    animation: slideUp 0.5s ease-out;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15) !important;
+}
+
+#cookie-declined-notice {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Cookie notice responsive design */
+@media (max-width: 768px) {
+    #first-visit-notice {
+        position: fixed !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        max-width: none !important;
+    }
+    
+    #cookie-warning {
+        font-size: 0.9rem !important;
+    }
+    
+    #cookie-warning .container {
+        padding: 0 10px !important;
+    }
+    
+    #cookie-consent-banner .col-md-8,
+    #cookie-consent-banner .col-md-4 {
+        text-align: center !important;
+    }
+    
+    #cookie-consent-banner .btn {
+        width: 45% !important;
+        margin: 2px !important;
+    }
+    
+    #cookie-consent-banner small {
+        display: block !important;
+        margin-top: 5px !important;
+    }
+}
+
+/* Ensure cookie notices don't interfere with main content */
+.cookie-notice-visible {
+    padding-top: 70px;
+}
+
+/* Dark mode cookie notices (if you plan to implement dark mode) */
+@media (prefers-color-scheme: dark) {
+    #cookie-warning {
+        background-color: #2c2c2c !important;
+        color: #f8f9fa !important;
+        border-color: #f39c12 !important;
+    }
+    
+    #first-visit-notice {
+        background-color: #2c2c2c !important;
+        color: #f8f9fa !important;
+        border-color: #17a2b8 !important;
+    }
+}
