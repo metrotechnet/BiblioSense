@@ -21,6 +21,13 @@ GUIDE_TESTS.md
 static/favicon/
 *.ico
 favicon.ico
+favicon-*.png
+favicon-*.jpg
+apple-touch-icon*.png
+android-chrome-*.png
+mstile-*.png
+browserconfig.xml
+site.webmanifest
 
 # Fichiers de test et config obsolètes
 config.py
