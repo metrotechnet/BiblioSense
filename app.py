@@ -418,7 +418,8 @@ def create_app():
                 title_author_book_ids = {book["id"] for book in title_author_matches}
                 taxonomy_matches = find_taxonomy_matches(
                     books_data, merged_taxonomy, title_author_book_ids
-                )          
+                )      
+                print(f"   → Extracted taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False)}")    
                 # Combine all results: prioritized matches + taxonomy expansions
                 filtered_books.extend(taxonomy_matches)
             
