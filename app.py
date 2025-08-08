@@ -366,34 +366,39 @@ def create_app():
             # ==================== PHASE 3: TAXONOMY STRATEGY SELECTION ====================
             taxonomy_start_time = time.time()
             filtered_books = []
-            
+            taxonomy_gpt_time=0
+
             # Strategy 1: High-confidence title/author matches found
             if len(title_author_matches) > 0 and title_author_matches[0].get("score", 0) >= 1:
-                print("🎯 Strategy: Using title/author matches with merged taxonomy")
+                print("🎯 Strategy: Certain title/author, extend with merged taxonomy match")
                 # Merge taxonomy from found books to find similar works
                 merged_taxonomy = merge_taxonomy_from_books(title_author_matches)
                 filtered_books = title_author_matches
                 
             # Strategy 2: Low-confidence or no title/author matches  
             elif len(title_author_matches) > 0:
-                print("🤔 Strategy: Uncertain title/author, using GPT taxonomy")
+                print("🤔 Strategy: Uncertain title/author, use GPT taxonomy match")
                 # Not confident about title/author matches, rely on GPT classification
+                taxonomy_gpt_start = time.time()
                 merged_taxonomy = cached_gpt_classifier(query_text)
                 filtered_books = []
+                taxonomy_gpt_time = time.time() - taxonomy_gpt_start
 
             # Strategy 3: No title/author matches, check for other keywords
             elif len(other_keyword_matches) > 0:
-                print("🤔 Strategy: No title/author, using GPT taxonomy")
+                print("🤔 Strategy: No title/author but keyword matches, use other keywords match")
                 # Not confident about title/author matches, rely on GPT classification
                 merged_taxonomy = []
                 filtered_books = other_keyword_matches 
 
             # Strategy 4: No title/author or other keyword matches 
             elif len(other_keyword_matches) == 0:
-                print("🤔 Strategy: No title/author or other keyword matches, using GPT taxonomy")
+                print("🤔 Strategy: No title/author or other keyword matches, use GPT taxonomy match")
                 # Not confident about title/author matches, rely on GPT classification
+                taxonomy_gpt_start = time.time()
                 merged_taxonomy = cached_gpt_classifier(query_text)
                 filtered_books = [] 
+                taxonomy_gpt_time = time.time() - taxonomy_gpt_start
 
 
             # Normalize taxonomy format (convert sets to lists for JSON serialization)
@@ -433,7 +438,6 @@ def create_app():
             description_time = time.time() - description_start_time
             
             # ==================== PHASE 6: RESULTS PROCESSING & STORAGE ====================
-            storage_start_time = time.time()
             
             # Debug output: show top results for verification
             # print(f"🎯 Final results preview:")
@@ -443,7 +447,6 @@ def create_app():
             # Store filtered results in user session for pagination
             user_filtered_books[user_id] = filtered_books
             
-            storage_time = time.time() - storage_start_time
 
             # ==================== PHASE 7: PERFORMANCE ANALYTICS ====================
             # Calculate comprehensive timing breakdown
@@ -455,15 +458,15 @@ def create_app():
             performance_monitor.track_request(user_id, total_time)
             
             # Detailed performance logging
-            # print(f"� Comprehensive Performance Analysis for user {user_id}:")
-            # print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
-            # print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
-            # print(f"   │  └─ Description generation: {description_time:.3f}s")
-            # print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
-            # print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
-            # print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
-            # print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
-            # print(f"   ├─ Storage operations: {storage_time:.3f}s")
+            print(f"� Comprehensive Performance Analysis for user {user_id}:")
+            print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
+            print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
+            print(f"   │  ├─ Taxonomy generation: {taxonomy_gpt_time:.3f}s")
+            print(f"   │  └─ Description generation: {description_time:.3f}s")
+            print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
+            print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
+            print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
+            print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
             print(f"   └─ TOTAL REQUEST TIME: {total_time:.3f}s")
             print(f"   📚 Results: {len(filtered_books)} books found")
             
