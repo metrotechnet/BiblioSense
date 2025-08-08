@@ -404,7 +404,7 @@ def create_app():
                             merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
 
                 # print merged taxonomy for debugging
-                print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
+                print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy)}"   )
 
             taxonomy_time = time.time() - taxonomy_start_time
 

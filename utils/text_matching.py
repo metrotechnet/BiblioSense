@@ -128,11 +128,9 @@ def author_similarity_score(query_author, book_author):
         for q_last in query_parts['last_names']:
             for b_last in book_parts['last_names']:
                 if q_last == b_last:
-                    score += 0.6
-                    break
-                elif q_last in b_last or b_last in q_last:
                     score += 0.4
                     break
+
     
     # Check first names vs initials
     if query_parts['first_names'] or query_parts['initials']:
