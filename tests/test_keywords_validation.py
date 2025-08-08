@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from openai import OpenAI
-from utils.gpt_services import get_keywords_with_gpt
+from utils.gpt_services import get_catagories_with_gpt, get_keywords_with_gpt
 from utils.config import get_config, get_secret
 
 def extract_queries_from_markdown(file_path):
@@ -131,6 +131,15 @@ def test_keywords_extraction(queries, openai_client, output_file="test_results_k
             
             # Afficher le résultat
             print(f"✅ Résultat: {json.dumps(result, ensure_ascii=False)}")
+
+            # Load taxonomy data
+            TAXONOMY_FILE = "dbase/classification_books.json"
+            with open(TAXONOMY_FILE, "r", encoding="utf-8") as f:
+                taxonomy_data = json.load(f)
+            # print(f"✅ Taxonomy data loaded from {TAXONOMY_FILE}")
+            # test get_catagories_with_gpt
+            category_result = get_catagories_with_gpt(query, taxonomy_data, openai_client)
+            print(f"✅ Catégories: {json.dumps(category_result, ensure_ascii=False)}")
             
         except Exception as e:
             # En cas d'erreur

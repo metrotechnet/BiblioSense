@@ -288,62 +288,6 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
     Returns:
         dict: Parsed GPT response as JSON with keywords.
     """
- # prompt = f"""
-    #     Tu es un classificateur de requêtes spécialisé dans la recherche de livres. 
-    #     Analyse la requête ci-dessous et identifie uniquement les informations pertinentes demandées.
-    #     Retourne un objet JSON contenant SEULEMENT les champs en lien direct avec la requête.
-
-
-    #     ### Champs disponibles pour les mots-clés :
-    #     - titre : titre du livre
-    #     - auteur : nom(s) d’auteur(s)
-    #     - resume : résumé ou description du livre (important)
-    #     - editeur : éditeur
-    #     - langue : langue
-    #     - categorie : catégorie ou domaine
-    #     - parution : date de publication
-    #     - pages : nombre de pages
-
-    #     ### Requête utilisateur :
-    #     {text}
-
-    #     ### Instructions de classification :
-    #     1. **Analyse la requête** : identifie quels éléments sont mentionnés ou recherchés
-    #     2. **Sélectionne uniquement les champs pertinents** : n'inclus que les champs directement liés à la requête
-    #     3. **Omets les champs non pertinents** : si un champ n'est pas mentionné ou sous-entendu, ne l'inclus pas
-    #     4. **Génère des synonymes et variantes** pour chaque champ pertinent
-    #     5. **Inclus les variantes orthographiques**, synonymes et termes connexes
-
-    #     ### Exemples d'analyse :
-    #     - "livres de Stephen King" → SEULEMENT auteur: ["Stephen King", "S. King"]
-    #     - "romans policiers" → SEULEMENT categorie: ["policier", "polar", "thriller", "crime"]
-    #     - "livres en anglais sur la guerre" → langue: ["anglais", "english"] ET resume: ["guerre", "conflit", "bataille"]
-    #     - "romans récents" → parution: ["récent", "nouveau", "2020s"] ET categorie: ["roman", "fiction"]
-
-    #     ### Format de réponse JSON (inclus SEULEMENT les champs pertinents) :
-    #     {{
-    #     "keywords": {{
-    #         // N'inclus que les champs détectés dans la requête
-    #         // Exemples selon la requête :
-    #         "auteur": ["nom_exact", "variante"], // si auteur mentionné
-    #         "categorie": ["genre", "synonymes"], // si genre mentionné  
-    #         "resume": ["concept", "synonymes"], // si thème/sujet mentionné
-    #         "langue": ["langue"], // si langue spécifiée
-    #         "parution": ["période"] // si date mentionnée
-    #     }}
-    #     }}
-
-    #     **IMPORTANT** : Ne retourne que les champs explicitement ou implicitement présents dans la requête.
-        
-    #     ### Synonymes par domaine (utilise uniquement si pertinent) :
-    #     - Romance : romantique, sentimental, amoureux, passion, amour
-    #     - Thriller/Policier : suspense, polar, enquête, crime, mystère, detective
-    #     - Fantasy : fantastique, merveilleux, magie, épique, heroic-fantasy
-    #     - Science-fiction : sci-fi, SF, anticipation, futuriste, technologique
-    #     - Historique : période, époque, siècle, chronique, passé, histoire
-    #     - Jeunesse : enfant, ado, adolescent, young adult, junior
-
-
 
 
     # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
@@ -365,24 +309,7 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
         }}
         Règle:  n'inclus que les champs directement liés à la requête."""
 
-    # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
-    # prompt = f"""Extrait UN SEUL mot-clé de recherche de cette requête de livre. Identifie le champ le plus pertinent uniquement.
-
-    #     Requête: "{text}"
-    #     Champs disponibles: titre, auteur, resume, editeur, langue, categorie, parution, pages
-
-    #     RETOURNE UNIQUEMENT UN OBJET JSON VALIDE avec cette structure exacte:
-    #     {{"keywords": {{"Champs disponibles": ["mot_clé", "variante1", "variante2"]}}}}
-        
-        
-    #     ### Synonymes par domaine (utilise uniquement si pertinent) :
-    #     - Romance : romantique, sentimental, amoureux, passion, amour
-    #     - Thriller/Policier : suspense, polar, enquête, crime, mystère, detective
-    #     - Fantasy : fantastique, merveilleux, magie, épique, heroic-fantasy
-    #     - Science-fiction : sci-fi, SF, anticipation, futuriste, technologique
-    #     - Historique : période, époque, siècle, chronique, passé, histoire
-    #     - Jeunesse : enfant, ado, adolescent, young adult, junior"""
-
+    
     try:
         # Call OpenAI GPT model with the constructed prompt
         response = openai_client.responses.create(
