@@ -403,8 +403,8 @@ def create_app():
                         if isinstance(merged_taxonomy[main_category][sub_key], set):
                             merged_taxonomy[main_category][sub_key] = list(merged_taxonomy[main_category][sub_key])
 
-            # print merged taxonomy for debugging
-            # print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
+                # print merged taxonomy for debugging
+                print(f"📚 Merged taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False, indent=2)}"   )
 
             taxonomy_time = time.time() - taxonomy_start_time
 
@@ -419,7 +419,6 @@ def create_app():
                 taxonomy_matches = find_taxonomy_matches(
                     books_data, merged_taxonomy, title_author_book_ids
                 )      
-                print(f"   → Extracted taxonomy: {json.dumps(merged_taxonomy, ensure_ascii=False)}")    
                 # Combine all results: prioritized matches + taxonomy expansions
                 filtered_books.extend(taxonomy_matches)
             
