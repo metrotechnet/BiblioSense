@@ -441,7 +441,7 @@ def create_app():
             
             # Debug output: show top results for verification
             # print(f"🎯 Final results preview:")
-            # for i, book in enumerate(filtered_books[:10], 1):
+            # for i, book in enumerate(filtered_books[:100], 1):
             #     print(f"   {i}. {book.get('titre', 'Unknown Title')} (Score: {book.get('score', 0)})")
 
             # Store filtered results in user session for pagination
@@ -459,14 +459,14 @@ def create_app():
             
             # Detailed performance logging
             print(f"� Comprehensive Performance Analysis for user {user_id}:")
-            print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
-            print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
-            print(f"   │  ├─ Taxonomy generation: {taxonomy_gpt_time:.3f}s")
-            print(f"   │  └─ Description generation: {description_time:.3f}s")
-            print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
-            print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
-            print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
-            print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
+            # print(f"   ├─ GPT Operations: {total_gpt_time:.3f}s ({(total_gpt_time/total_time)*100:.1f}%)")
+            # print(f"   │  ├─ Keyword extraction: {gpt_keywords_time:.3f}s")
+            # print(f"   │  ├─ Taxonomy generation: {taxonomy_gpt_time:.3f}s")
+            # print(f"   │  └─ Description generation: {description_time:.3f}s")
+            # print(f"   ├─ Book Filtering: {total_filtering_time:.3f}s ({(total_filtering_time/total_time)*100:.1f}%)")
+            # print(f"   │  ├─ Keyword filtering: {keyword_filter_time:.3f}s")
+            # print(f"   │  ├─ Taxonomy processing: {taxonomy_time:.3f}s")
+            # print(f"   │  └─ Taxonomy expansion: {taxonomy_expansion_time:.3f}s")
             print(f"   └─ TOTAL REQUEST TIME: {total_time:.3f}s")
             print(f"   📚 Results: {len(filtered_books)} books found")
             

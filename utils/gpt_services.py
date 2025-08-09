@@ -289,6 +289,7 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
         dict: Parsed GPT response as JSON with keywords.
     """
 
+#    "type": ["book, livre, livre audio etc.", "variante"], // si type mentionné
 
     # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
     prompt = f"""Extrait les mots-clés de recherche de cette requête de livre. Identifie le champ le plus pertinent uniquement.
@@ -298,16 +299,17 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
 
         Format JSON: 
         {{
-            "keywords: {{
+            "keywords": {{
                 "auteur": ["nom_exact", "variante"], // si auteur mentionné
-                "categorie": ["genre", "synonymes"], // si genre mentionné  
+                "categorie": ["genre", "synonymes"], // si genre mentionné
                 "resume": ["concept", "synonymes"], // si thème/sujet mentionné
                 "langue": ["langue"], // si langue spécifiée
-                "parution": ["période"] // si date mentionnée
+                "parution": ["période"], // si date mentionnée
+                "pages": ["nombre_de_pages", "plus de...", "moins de..."], // si pages spécifiées
             }}
             
         }}
-        Règle:  n'inclus que les champs directement liés à la requête."""
+        Règle:  n'inclus que les champs directement liés à la requête. ne retourne que les champs non nuls."""
 
     
     try:

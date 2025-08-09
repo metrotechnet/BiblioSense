@@ -14,7 +14,7 @@
           "categorie": [
             "science-fiction",
             "SF",
-            "futuriste"
+            "fiction scientifique"
           ]
         }
       },
@@ -45,6 +45,7 @@
         "keywords": {
           "categorie": [
             "thriller",
+            "suspense",
             "psychologique"
           ]
         }
@@ -59,8 +60,9 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "roman",
-            "historique"
+            "roman historique",
+            "historique",
+            "fiction historique"
           ]
         }
       },
@@ -74,9 +76,8 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "romance contemporaine",
             "romance",
-            "fiction romantique"
+            "romance contemporaine"
           ]
         }
       },
@@ -111,8 +112,7 @@
           "categorie": [
             "développement personnel",
             "croissance personnelle",
-            "bien-être",
-            "épanouissement"
+            "bien-être"
           ]
         }
       },
@@ -140,10 +140,14 @@
       "query": "Je veux des livres sur l'histoire de France",
       "gpt_result": {
         "keywords": {
-          "resume": [
-            "histoire de France",
+          "categorie": [
             "histoire",
             "France"
+          ],
+          "resume": [
+            "histoire de France",
+            "événements historiques",
+            "culture française"
           ]
         }
       },
@@ -173,8 +177,8 @@
         "keywords": {
           "categorie": [
             "cuisine végétarienne",
-            "cuisine sans viande",
-            "cuisine végétale"
+            "végétarisme",
+            "cuisine saine"
           ]
         }
       },
@@ -188,14 +192,12 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "guide de voyage",
             "voyage",
-            "tourisme"
+            "guides de voyage"
           ],
           "resume": [
             "Europe",
-            "destinations",
-            "itinéraires"
+            "voyage en Europe"
           ]
         }
       },
@@ -210,11 +212,6 @@
         "keywords": {
           "auteur": [
             "Victor Hugo"
-          ],
-          "categorie": [
-            "littérature",
-            "roman",
-            "poésie"
           ]
         }
       },
@@ -251,8 +248,7 @@
           "categorie": [
             "roman",
             "fiction",
-            "horreur",
-            "thriller"
+            "horreur"
           ]
         }
       },
@@ -267,9 +263,6 @@
         "keywords": {
           "auteur": [
             "Guillaume Musso"
-          ],
-          "parution": [
-            "derniers"
           ]
         }
       },
@@ -329,7 +322,11 @@
           ],
           "categorie": [
             "dystopie",
-            "roman politique"
+            "roman",
+            "fiction"
+          ],
+          "langue": [
+            "anglais"
           ]
         }
       },
@@ -347,8 +344,10 @@
           ],
           "categorie": [
             "roman",
-            "littérature",
-            "existentialisme"
+            "littérature"
+          ],
+          "langue": [
+            "français"
           ]
         }
       },
@@ -367,7 +366,7 @@
           "categorie": [
             "fantasy",
             "magie",
-            "aventure"
+            "sorciers"
           ]
         }
       },
@@ -382,6 +381,15 @@
         "keywords": {
           "titre": [
             "Da Vinci Code"
+          ],
+          "categorie": [
+            "thriller",
+            "roman policier"
+          ],
+          "resume": [
+            "mystère",
+            "art",
+            "histoire"
           ]
         }
       },
@@ -460,7 +468,7 @@
         "keywords": {
           "categorie": [
             "apprentissage",
-            "français",
+            "éducation",
             "langue"
           ],
           "langue": [
@@ -557,9 +565,7 @@
             "italien"
           ],
           "categorie": [
-            "art",
-            "beaux-arts",
-            "esthétique"
+            "art"
           ]
         }
       },
@@ -593,7 +599,7 @@
       "gpt_result": {
         "keywords": {
           "pages": [
-            "moins de 200 pages"
+            "moins de 200"
           ]
         }
       },
@@ -608,10 +614,11 @@
         "keywords": {
           "categorie": [
             "romans",
-            "littérature"
+            "fiction"
           ],
           "pages": [
-            "plus de 500 pages"
+            "500",
+            "volumineux"
           ]
         }
       },
@@ -627,8 +634,7 @@
           "categorie": [
             "nouvelles",
             "contes",
-            "récits",
-            "fiction"
+            "récits"
           ]
         }
       },
@@ -657,9 +663,7 @@
         "keywords": {
           "categorie": [
             "BD",
-            "romans graphiques",
-            "bande dessinée",
-            "graphic novels"
+            "romans graphiques"
           ]
         }
       },
@@ -710,13 +714,12 @@
           "categorie": [
             "droit",
             "juridique",
-            "législation",
-            "référence"
+            "légal"
           ],
           "resume": [
-            "ouvrages",
-            "référence",
-            "droit"
+            "ouvrages de référence",
+            "manuel",
+            "guide"
           ]
         }
       },
@@ -832,8 +835,8 @@
           ],
           "resume": [
             "siècle des Lumières",
-            "pensée éclairée",
-            "rationalisme"
+            "rationalisme",
+            "éclaircissement"
           ]
         }
       },
@@ -847,8 +850,8 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "prix littéraire",
-            "Goncourt"
+            "prix",
+            "récompense littéraire"
           ]
         }
       },
@@ -862,8 +865,8 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "best-sellers",
-            "livres populaires"
+            "best-seller",
+            "succès littéraire"
           ]
         }
       },
@@ -882,8 +885,9 @@
             "films"
           ],
           "resume": [
-            "livres adaptés",
-            "adaptations littéraires"
+            "livres",
+            "adaptés",
+            "cinéma"
           ]
         }
       },
@@ -900,6 +904,11 @@
             "littérature",
             "prix",
             "récompense"
+          ],
+          "resume": [
+            "Nobel",
+            "littérature",
+            "distinction"
           ]
         }
       },
@@ -914,8 +923,13 @@
         "keywords": {
           "categorie": [
             "livres",
+            "lectures",
+            "publications"
+          ],
+          "resume": [
+            "recommandations",
             "critiques",
-            "recommandés"
+            "avis"
           ]
         }
       },
@@ -930,14 +944,10 @@
         "keywords": {
           "categorie": [
             "roman policier",
-            "polar",
-            "thriller"
+            "polar"
           ],
           "parution": [
             "après 2020"
-          ],
-          "langue": [
-            "français"
           ]
         }
       },
@@ -958,7 +968,7 @@
             "français"
           ],
           "pages": [
-            "moins de 300 pages"
+            "moins de 300"
           ]
         }
       },
@@ -971,12 +981,12 @@
       "query": "Biographie d'un scientifique traduite de l'anglais",
       "gpt_result": {
         "keywords": {
-          "resume": [
-            "biographie",
-            "scientifique"
-          ],
           "langue": [
             "anglais"
+          ],
+          "categorie": [
+            "biographie",
+            "scientifique"
           ]
         }
       },
@@ -989,15 +999,13 @@
       "query": "Roman de science-fiction écrit par une femme",
       "gpt_result": {
         "keywords": {
-          "auteur": [],
+          "auteur": [
+            "femme"
+          ],
           "categorie": [
             "science-fiction",
-            "SF",
-            "roman futuriste"
-          ],
-          "resume": [],
-          "langue": [],
-          "parution": []
+            "SF"
+          ]
         }
       },
       "status": "success",
@@ -1032,11 +1040,12 @@
           "categorie": [
             "amitié",
             "relations",
-            "liens sociaux"
+            "camaraderie"
           ],
           "resume": [
             "thème de l'amitié",
-            "concept d'amitié"
+            "liens sociaux",
+            "relations interpersonnelles"
           ]
         }
       },
@@ -1072,8 +1081,7 @@
         "keywords": {
           "categorie": [
             "écologie",
-            "environnement",
-            "durabilité"
+            "environnement"
           ],
           "resume": [
             "écologie",
@@ -1094,15 +1102,12 @@
           "categorie": [
             "art de vivre",
             "bien-être",
-            "style de vie"
+            "développement personnel"
           ],
           "resume": [
+            "style de vie",
             "philosophie de vie",
-            "épanouissement personnel",
-            "équilibre"
-          ],
-          "langue": [
-            "français"
+            "épanouissement"
           ]
         }
       },
@@ -1117,8 +1122,8 @@
         "keywords": {
           "categorie": [
             "fantasy",
-            "sword and sorcery",
-            "high fantasy"
+            "fantastique",
+            "littérature de l'imaginaire"
           ],
           "resume": [
             "dragons",
@@ -1139,13 +1144,12 @@
           "categorie": [
             "entrepreneuriat",
             "femmes",
-            "entrepreneuriat féminin"
+            "leadership féminin"
           ],
           "resume": [
-            "entrepreneuriat",
-            "femmes",
-            "leadership féminin",
-            "business au féminin"
+            "entrepreneuriat féminin",
+            "femmes entrepreneures",
+            "leadership"
           ]
         }
       },
@@ -1200,16 +1204,16 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "romans",
+            "roman",
             "littérature",
-            "fiction",
-            "drame"
+            "drame",
+            "émotionnel"
           ],
           "resume": [
-            "tristesse",
+            "triste",
+            "pleurer",
             "émotion",
-            "pleurs",
-            "sensation"
+            "sombre"
           ]
         }
       },
@@ -1247,6 +1251,11 @@
             "intriguant",
             "suspense",
             "énigme"
+          ],
+          "categorie": [
+            "mystère",
+            "thriller",
+            "suspense"
           ]
         }
       },
@@ -1261,11 +1270,6 @@
         "keywords": {
           "categorie": [
             "réconfortant",
-            "hiver",
-            "livre"
-          ],
-          "resume": [
-            "réconfort",
             "hiver"
           ]
         }
@@ -1298,11 +1302,10 @@
       "gpt_result": {
         "keywords": {
           "categorie": [
-            "développement personnel",
-            "croissance personnelle"
+            "développement personnel"
           ],
           "pages": [
-            "moins de 250 pages"
+            "moins de 250"
           ]
         }
       },
@@ -1337,6 +1340,10 @@
         "keywords": {
           "categorie": [
             "biographie",
+            "art",
+            "peinture"
+          ],
+          "resume": [
             "artistes",
             "peintres"
           ]
@@ -1354,12 +1361,8 @@
           "resume": [
             "compréhension",
             "rêves",
-            "interprétation des rêves"
-          ],
-          "categorie": [
-            "psychologie",
-            "développement personnel",
-            "spiritualité"
+            "interprétation",
+            "symbolisme"
           ]
         }
       },
@@ -1374,14 +1377,12 @@
         "keywords": {
           "categorie": [
             "science-fiction",
-            "space opera",
-            "romans de l'espace"
+            "space opera"
           ],
           "resume": [
             "romans",
             "espace",
-            "univers",
-            "exploration spatiale"
+            "univers"
           ]
         }
       },
@@ -1397,11 +1398,12 @@
           "categorie": [
             "cuisine",
             "gastronomie",
-            "secrets de grand-mère"
+            "recettes"
           ],
           "resume": [
-            "secrets de cuisine",
-            "recettes traditionnelles"
+            "secrets",
+            "tradition",
+            "grand-mère"
           ]
         }
       },
@@ -1417,13 +1419,11 @@
           "categorie": [
             "histoire",
             "inventions",
-            "technologie",
-            "innovation"
+            "technologie"
           ],
           "resume": [
             "inventions",
             "impact",
-            "changement",
             "monde"
           ]
         }
@@ -1444,8 +1444,7 @@
           ],
           "resume": [
             "héros non conventionnels",
-            "personnages atypiques",
-            "protagonistes originaux"
+            "personnages atypiques"
           ]
         }
       },

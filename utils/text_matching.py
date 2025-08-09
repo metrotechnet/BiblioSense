@@ -153,11 +153,9 @@ def author_similarity_score(query_author, book_author):
         for q_first in query_parts['first_names']:
             for b_first in book_parts['first_names']:
                 if q_first == b_first:
-                    score += 0.4
-                    break
-                elif q_first in b_first or b_first in q_first:
                     score += 0.2
                     break
+
     
     # Normalize score
     if max_possible_score > 0:
@@ -201,7 +199,7 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         if query_lower == book_lower:
             return 1.0
         elif query_lower in book_lower or book_lower in query_lower:
-            return 1.0
+            return 0.8
         else:
             return 0.0
         
@@ -276,8 +274,6 @@ def smart_keyword_match(query_value, book_field, field_name=""):
     elif field_name.lower() in ["langue", "language"]:
         if query_lower == book_lower:
             return 1.0
-        elif query_lower in book_lower or book_lower in query_lower:
-            return 0.8
         else:
             return 0.0
         
@@ -291,14 +287,14 @@ def smart_keyword_match(query_value, book_field, field_name=""):
         
     elif field_name.lower() in ["categorie", "category", "genre"]:
         if re.search(r'\b' + re.escape(query_lower) + r'\b', book_lower):
-            return 0.9
+            return 1.0
         else:
             return 0.0
        
     elif field_name.lower() in ["resume", "summary", "description"]:
         # Check if book_lower appears as full words in query_lower
         if re.search(r'\b' + re.escape(query_value.strip()) + r'\b', book_lower):
-            return 0.8
+            return 1.0
         else:
             return 0.0
 
@@ -318,67 +314,65 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
     Returns:
         tuple: (title_author_score, other_keyword_score)
     """
-    title_author_score = 0
-    other_keyword_score = 0
+    # if book.get('id') == 'book_4700':
+    #     print("Special case for book_4700")
     has_title_author_match = False
-    
+    tot_match_score = 0
     for keyword_key, keyword_values in keyword_items:
-        book_field = book.get(keyword_key)
-        if not book_field:
-            continue
-            
         is_title_author = keyword_key in title_author_fields
-        
+        if not keyword_values:
+            continue
         # Handle both single keywords (string) and multiple keywords (list)
         if isinstance(keyword_values, str):
-            # Backward compatibility for single keyword
-            best_match_score = smart_keyword_match(keyword_values, book_field, keyword_key)
-            
-            # If keyword_key is 'categorie', also check 'resume' field
-            if keyword_key == 'categorie':
+            keyword_values = [keyword_values]  # Convert to list for uniform processing        
+        # Special handling for 'categorie' - check multiple fields
+        if keyword_key == 'categorie':
+
+            # Check 'categorie' field
+            match_score=0
+            categorie_field = book.get('categorie')
+            if categorie_field:
+                for keyword_variant in keyword_values:
+                    match_score = smart_keyword_match(keyword_variant, categorie_field, 'categorie')
+                    tot_match_score += match_score
+                    if match_score > 0:
+                        break
+
+            # Check 'resume' field
+            if match_score==0:
                 resume_field = book.get('resume')
                 if resume_field:
-                    resume_score = smart_keyword_match(keyword_values, resume_field, 'resume')
-                    best_match_score = max(best_match_score, resume_score)
-                    
-        elif isinstance(keyword_values, list):
-            # New logic for multiple synonymous keywords
-            best_match_score = 0
+                    for keyword_variant in keyword_values:
+                        match_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
+                        tot_match_score += match_score
+                        if match_score > 0:
+                            break
+       
+        # Standard handling for other fields - check only the corresponding field
+        else:
+            book_field = book.get(keyword_key)
+            if not book_field:
+                continue
+
             for keyword_variant in keyword_values:
                 match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
-                if match_score > best_match_score:
-                    best_match_score = match_score
-            
-            # If keyword_key is 'categorie', also check 'resume' field for all variants
-            if keyword_key == 'categorie':
-                resume_field = book.get('resume')
-                if resume_field:
-                    for keyword_variant in keyword_values:
-                        resume_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
-                        if resume_score > best_match_score:
-                            best_match_score = resume_score
-                description_field = book.get('description')
-                if description_field:
-                    for keyword_variant in keyword_values:
-                        description_score = smart_keyword_match(keyword_variant, description_field, 'description')
-                        if description_score > best_match_score:
-                            best_match_score = description_score
-        else:
-            best_match_score = 0
+                tot_match_score += match_score
+                if match_score > 0:
+                    break
 
-        # If we have a match and it's in title/author fields, mark it
-        if best_match_score > 0 and is_title_author:
+        # Assign scores based on match type
+        if tot_match_score > 0 and is_title_author:
             has_title_author_match = True
-            title_author_score = max(title_author_score, best_match_score)
-        elif best_match_score > 0 and not is_title_author:
-            other_keyword_score = max(other_keyword_score, best_match_score)
+
     
     # If we have title/author match, return that score and 0 for other
     # Otherwise return 0 for title/author and the other score
+    score = tot_match_score / len(keyword_items) if keyword_items else 0
+
     if has_title_author_match:
-        return title_author_score, 0
+        return score, 0
     else:
-        return 0, other_keyword_score
+        return 0, score
 
 
 def merge_taxonomy_from_books(title_author_matches):
@@ -546,10 +540,10 @@ def filter_books_by_keywords(books_data, keyword_items, title_author_fields):
         title_author_score, other_keyword_score = calculate_keyword_score(keyword_items, book, title_author_fields)
 
         # if title_author_score has score >0 that save in title_author_matches
-        if title_author_score >= 1:
+        if title_author_score >= 1.0:
             book_copy = {**book, "score": title_author_score}
             title_author_matches.append(book_copy)
-        elif title_author_score == 0 and other_keyword_score > 0:
+        elif title_author_score == 0 and other_keyword_score >= 1.0:
             book_copy = {**book, "score": other_keyword_score}
             other_keyword_matches.append(book_copy)
 
