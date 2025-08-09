@@ -506,7 +506,7 @@ def find_taxonomy_matches(books_data, merged_taxonomy, title_author_book_ids):
     # Sort by score descending and filter to top-scoring books
     taxonomy_matches = sorted(taxonomy_matches, key=lambda x: x.get("score", 0), reverse=True)
     if max_possible_score > 0:
-        taxonomy_matches = [book for book in taxonomy_matches if book.get("score", 0) >= max_possible_score-1]
+        taxonomy_matches = [book for book in taxonomy_matches if book.get("score", 0) >= 2 * max_possible_score / 3]
     
     return taxonomy_matches
 

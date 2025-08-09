@@ -678,6 +678,7 @@ const domService = {
                     img.style.display = "block";
                     img.style.maxHeight = "150px"; // Set a max height for the image
                     this.displayBookDetails(book, item, leftCol);
+                    imageLoaded=true;
                 }
             }
 
@@ -691,7 +692,7 @@ const domService = {
                     this.displayBookDetails(book, item, leftCol);
                     console.log(`Image timeout for: ${book.couverture}`);
                 }
-            }, 100); // 100 millisecond timeout
+            }, 500); // 500 millisecond timeout
 
             leftCol.appendChild(img);
         }
