@@ -309,7 +309,10 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
             }}
             
         }}
-        Règle:  n'inclus que les champs directement liés à la requête. ne retourne que les champs non nuls."""
+        Règles importantes:  
+        - N'inclus que les champs directement liés à la requête
+        - Ne retourne que les champs non nuls
+        """
 
     
     try:

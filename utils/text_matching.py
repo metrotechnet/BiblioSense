@@ -334,8 +334,8 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
             if categorie_field:
                 for keyword_variant in keyword_values:
                     match_score = smart_keyword_match(keyword_variant, categorie_field, 'categorie')
-                    tot_match_score += match_score
                     if match_score > 0:
+                        tot_match_score += match_score
                         break
 
             # Check 'resume' field
@@ -343,9 +343,10 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
                 resume_field = book.get('resume')
                 if resume_field:
                     for keyword_variant in keyword_values:
+                        # make sure match_score is 2 or more
                         match_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
-                        tot_match_score += match_score
-                        if match_score > 0:
+                        if match_score > 1:
+                            tot_match_score += match_score
                             break
        
         # Standard handling for other fields - check only the corresponding field
@@ -356,8 +357,8 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
 
             for keyword_variant in keyword_values:
                 match_score = smart_keyword_match(keyword_variant, book_field, keyword_key)
-                tot_match_score += match_score
                 if match_score > 0:
+                    tot_match_score += match_score
                     break
 
         # Assign scores based on match type
@@ -442,11 +443,12 @@ def calculate_taxonomy_score(merged_taxonomy, book):
         book (dict): Book data dictionary
         
     Returns:
-        int: Taxonomy score
+        float: Taxonomy score as percentage (0.0 to 1.0)
     """
     import json
     
     taxonomy_score = 0
+    total_possible_matches = 0
     book_taxonomy = {}
     
     # Parse book taxonomy
@@ -463,6 +465,9 @@ def calculate_taxonomy_score(merged_taxonomy, book):
             if book_main_section:
                 for sub_key, merged_values in sub_categories.items():
                     if merged_values:  # Only check if merged category has values
+                        # Count total possible matches from reference taxonomy
+                        total_possible_matches += len(merged_values)
+                        
                         book_values = book_main_section.get(sub_key)
                         if book_values:
                             if isinstance(book_values, list):
@@ -472,7 +477,11 @@ def calculate_taxonomy_score(merged_taxonomy, book):
                             elif book_values in merged_values:
                                 taxonomy_score += 1
     
-    return taxonomy_score
+    # Return percentage (0.0 to 1.0)
+    if total_possible_matches > 0:
+        return taxonomy_score / total_possible_matches
+    else:
+        return 0.0
 
 
 def find_taxonomy_matches(books_data, merged_taxonomy, title_author_book_ids):
@@ -489,8 +498,8 @@ def find_taxonomy_matches(books_data, merged_taxonomy, title_author_book_ids):
                with scores and max_possible_score is the highest score found
     """
     taxonomy_matches = []
-    max_possible_score = 0
-    
+    score_threshold = 0.5 
+
     for book in books_data:
         book_taxonomy = book.get("classification")
         if not book_taxonomy:
@@ -498,15 +507,15 @@ def find_taxonomy_matches(books_data, merged_taxonomy, title_author_book_ids):
         if book["id"] in title_author_book_ids:
             continue
         taxonomy_score = calculate_taxonomy_score(merged_taxonomy, book)
-        max_possible_score = max(max_possible_score, taxonomy_score)
-        if taxonomy_score > 0:
+        if taxonomy_score > score_threshold:
             book_copy = {**book, "score": taxonomy_score}
             taxonomy_matches.append(book_copy)
 
     # Sort by score descending and filter to top-scoring books
     taxonomy_matches = sorted(taxonomy_matches, key=lambda x: x.get("score", 0), reverse=True)
-    if max_possible_score > 0:
-        taxonomy_matches = [book for book in taxonomy_matches if book.get("score", 0) >= max(1, 2 * max_possible_score / 3)]
+    # print first 10 matches for debugging
+    # for match in taxonomy_matches[:10]:
+    #     print(f"Match: {match['titre']} (Score: {match['score']})")
 
     return taxonomy_matches
 
