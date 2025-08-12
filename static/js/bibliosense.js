@@ -57,16 +57,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // Perform the search using the data service
                 const result = await dataService.searchBooks(query);
 
-                // Stop spinner after search is complete    
-                domService.stopSpinner();
-                // Clear the search input field
-                searchInput.value = "";
-
 
                 // Show a message with the number of results found
                 const message = (result.description || "") + " (" + result.total_books + " documents trouvés)";
                 // Fetch filtered books to update the list
-                dataService.fetchBooks("filtered", message);
+                dataService.fetchBooks("filtered", message, (paginationInfo) => {
+                    // Stop spinner
+                    domService.stopSpinner();
+                    // Clear the search input field
+                    searchInput.value = "";
+                });
 
             } catch (error) {
                 domService.showError("Erreur lors de la recherche. Veuillez réessayer.");

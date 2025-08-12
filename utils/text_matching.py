@@ -334,7 +334,7 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
             if categorie_field:
                 for keyword_variant in keyword_values:
                     match_score = smart_keyword_match(keyword_variant, categorie_field, 'categorie')
-                    if match_score > 0:
+                    if match_score >= 1:
                         tot_match_score += match_score
                         break
 
@@ -345,7 +345,7 @@ def calculate_keyword_score(keyword_items, book, title_author_fields):
                     for keyword_variant in keyword_values:
                         # make sure match_score is 2 or more
                         match_score = smart_keyword_match(keyword_variant, resume_field, 'resume')
-                        if match_score > 1:
+                        if match_score >= 1:
                             tot_match_score += match_score
                             break
        

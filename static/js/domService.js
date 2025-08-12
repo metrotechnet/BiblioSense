@@ -681,18 +681,18 @@ const domService = {
                     imageLoaded=true;
                 }
             }
+ 
 
-            // Add timeout to prevent long waits (500 milliseconds)
-            setTimeout(() => {
+            //Add timeout to prevent long waits (500 milliseconds)
+            img.onerror = () => {
                 if (!imageLoaded) {
                     imageLoaded = true;
                     img.style.display = "none";
                     const placeholder = this.createBookPlaceholder(book);
                     leftCol.appendChild(placeholder);
                     this.displayBookDetails(book, item, leftCol);
-                    console.log(`Image timeout for: ${book.couverture}`);
                 }
-            }, 500); // 500 millisecond timeout
+            };
 
             leftCol.appendChild(img);
         }

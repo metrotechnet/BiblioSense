@@ -3,7 +3,7 @@
 // The dataService object provides methods to interact with the backend API for book data.
 const dataService = {
     // Fetches all books from the server.
-    async fetchBooks(source = "all", message = "") {
+    async fetchBooks(source = "all", message = "", callback=null) {
         try {
             // Send a GET request to the /books endpoint with the source parameter.
             const response = await fetch(`/books/0/100?source=${source}`)
@@ -15,6 +15,7 @@ const dataService = {
                                 source: data.source       // 'filtered' ou 'all'
                             };
                             domService.renderBookList(data.book_list, message, "book-list", paginationInfo);
+                            if (callback) callback(paginationInfo);
                         });
 
         } catch (error) {

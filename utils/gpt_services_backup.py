@@ -92,86 +92,7 @@ def log_query(user_id, query_text, results_count, response_time, gpt_data=None, 
         # Don't raise exception - logging should not break the main functionality
 
 # -------------------- GPT Service Functions --------------------
-def remove_ambiguous_words(keywords_dict):
-    """
-    Élimine les mots ambigus ou à double sens des mots-clés extraits par GPT
-    
-    Args:
-        keywords_dict (dict): Dictionnaire de mots-clés par champ
-    
-    Returns:
-        dict: Dictionnaire nettoyé des mots ambigus
-    """
-    # Liste des mots ambigus à éliminer
-    ambiguous_words = {
-        # Pronoms et déterminants
-        'son', 'sa', 'ses', 'leur', 'leurs', 'le', 'la', 'les', 'un', 'une', 'des',
-        'du', 'de', 'ce', 'cette', 'ces', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
-        'notre', 'nos', 'votre', 'vos', 'il', 'elle', 'ils', 'elles', 'je', 'tu',
-        'nous', 'vous', 'me', 'te', 'se', 'lui', 'leur', 'en', 'y', 'qui', 'que',
-        
-        # Mots génériques
-        # 'livre', 'roman', 'histoire', 'récit', 'texte', 'ouvrage', 'œuvre',
-        # 'auteur', 'écrivain', 'narrateur', 'personnage', 'héros', 'protagoniste',
-        
-        # Connecteurs et mots de liaison
-        'et', 'ou', 'mais', 'donc', 'car', 'ni', 'or', 'puis', 'alors', 'ainsi',
-        'aussi', 'encore', 'enfin', 'ensuite', 'cependant', 'néanmoins', 'toutefois',
-        
-        # Autres mots courants ambigus
-        'être', 'avoir', 'faire', 'dire', 'aller', 'voir', 'savoir', 'pouvoir',
-        'vouloir', 'venir', 'temps', 'vie', 'monde', 'homme', 'femme', 'enfant'
-    }
-    
-    cleaned_keywords = {}
-    
-    for field, keywords in keywords_dict.items():
-        if isinstance(keywords, list):
-            # Filtrer les mots ambigus et garder seulement les mots significatifs
-            cleaned_list = []
-            for keyword in keywords:
-                if isinstance(keyword, str):
-                    # Nettoyer et normaliser le mot-clé
-                    cleaned_keyword = keyword.lower().strip()
-                    # Garder le mot s'il n'est pas ambiguë et fait plus de 2 caractères
-                    if (cleaned_keyword not in ambiguous_words and 
-                        len(cleaned_keyword) > 2 and 
-                        cleaned_keyword.replace(' ', '').isalpha()):
-                        cleaned_list.append(keyword)  # Garder la forme originale
-            
-            # Ajouter le champ seulement s'il y a des mots-clés valides
-            if cleaned_list:
-                cleaned_keywords[field] = cleaned_list
-        else:
-            # Pour les valeurs non-liste, vérifier individuellement
-            if isinstance(keywords, str):
-                cleaned_keyword = keywords.lower().strip()
-                if (cleaned_keyword not in ambiguous_words and 
-                    len(cleaned_keyword) > 2 and 
-                    cleaned_keyword.replace(' ', '').isalpha()):
-                    cleaned_keywords[field] = keywords
-    
-    return cleaned_keywords
-def clean_gpt_keywords_response(response_dict):
-    """
-    Nettoie une réponse complète de GPT en éliminant les mots ambigus des mots-clés
-    
-    Args:
-        response_dict (dict): Réponse complète de GPT avec structure {"keywords": {...}}
-    
-    Returns:
-        dict: Réponse nettoyée des mots ambigus
-    """
-    if not isinstance(response_dict, dict):
-        return response_dict
-    
-    cleaned_response = response_dict.copy()
-    
-    # Nettoyer les mots-clés s'ils existent
-    if "keywords" in cleaned_response and isinstance(cleaned_response["keywords"], dict):
-        cleaned_response["keywords"] = remove_ambiguous_words(cleaned_response["keywords"])
-    
-    return cleaned_response
+
 
 def get_catagories_with_gpt_cached(text, taxonomy_data, openai_client, gpt_cache=None):
     """
@@ -373,6 +294,7 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
     # OPTIMIZED PROMPT (6 lines) - SAME FUNCTIONALITY, BETTER PERFORMANCE  
     prompt = f"""Extrait les mots-clés de recherche pour cette requête de livre. 
                  Sélectionne uniquement le champ le plus pertinent.
+                 Éliminer les mots ambigus ou à double sens (ex : son, sa)
 
 
         Requête: "{text}"
@@ -412,10 +334,8 @@ def get_keywords_with_gpt(text, taxonomy, openai_client):
         # Parse the JSON response
         parsed_response = json.loads(gpt_response)
 
-        # Nettoyer automatiquement les mots ambigus
-        cleaned_response = clean_gpt_keywords_response(parsed_response)
 
-        return cleaned_response
+        return parsed_response
         
     except json.JSONDecodeError as e:
         print(f"⚠️  JSON decode error: {e}")
