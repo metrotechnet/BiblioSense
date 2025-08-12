@@ -677,8 +677,8 @@ const domService = {
                     imageLoaded = true;
                     img.style.display = "block";
                     img.style.maxHeight = "150px"; // Set a max height for the image
+                    leftCol.appendChild(img);
                     this.displayBookDetails(book, item, leftCol);
-                    imageLoaded=true;
                 }
             }
  
@@ -694,7 +694,7 @@ const domService = {
                 }
             };
 
-            leftCol.appendChild(img);
+            
         }
         else {
             // If no cover image, create a placeholder
