@@ -109,18 +109,7 @@ def remove_ambiguous_words(keywords_dict):
         'du', 'de', 'ce', 'cette', 'ces', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
         'notre', 'nos', 'votre', 'vos', 'il', 'elle', 'ils', 'elles', 'je', 'tu',
         'nous', 'vous', 'me', 'te', 'se', 'lui', 'leur', 'en', 'y', 'qui', 'que',
-        
-        # Mots génériques
-        # 'livre', 'roman', 'histoire', 'récit', 'texte', 'ouvrage', 'œuvre',
-        # 'auteur', 'écrivain', 'narrateur', 'personnage', 'héros', 'protagoniste',
-        
-        # Connecteurs et mots de liaison
-        'et', 'ou', 'mais', 'donc', 'car', 'ni', 'or', 'puis', 'alors', 'ainsi',
-        'aussi', 'encore', 'enfin', 'ensuite', 'cependant', 'néanmoins', 'toutefois',
-        
-        # Autres mots courants ambigus
-        'être', 'avoir', 'faire', 'dire', 'aller', 'voir', 'savoir', 'pouvoir',
-        'vouloir', 'venir', 'temps', 'vie', 'monde', 'homme', 'femme', 'enfant'
+
     }
     
     cleaned_keywords = {}
@@ -134,9 +123,7 @@ def remove_ambiguous_words(keywords_dict):
                     # Nettoyer et normaliser le mot-clé
                     cleaned_keyword = keyword.lower().strip()
                     # Garder le mot s'il n'est pas ambiguë et fait plus de 2 caractères
-                    if (cleaned_keyword not in ambiguous_words and 
-                        len(cleaned_keyword) > 2 and 
-                        cleaned_keyword.replace(' ', '').isalpha()):
+                    if (cleaned_keyword not in ambiguous_words ):
                         cleaned_list.append(keyword)  # Garder la forme originale
             
             # Ajouter le champ seulement s'il y a des mots-clés valides
@@ -146,9 +133,7 @@ def remove_ambiguous_words(keywords_dict):
             # Pour les valeurs non-liste, vérifier individuellement
             if isinstance(keywords, str):
                 cleaned_keyword = keywords.lower().strip()
-                if (cleaned_keyword not in ambiguous_words and 
-                    len(cleaned_keyword) > 2 and 
-                    cleaned_keyword.replace(' ', '').isalpha()):
+                if (cleaned_keyword not in ambiguous_words):
                     cleaned_keywords[field] = keywords
     
     return cleaned_keywords
