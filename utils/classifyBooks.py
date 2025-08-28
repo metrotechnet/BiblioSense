@@ -3,14 +3,14 @@ from openai import OpenAI
 import json
 import os
 import time
-from utils.config import  get_secret
+from config import  get_secret
 
 # Configure your OpenAI API key
 #
     
-BOOK_DATABASE_FILE = "../dbase/prenumerique_complet.json"
+BOOK_DATABASE_FILE = "./dbase/prenumerique_complet.json"
 OUTPUT_FILE = "book_dbase.json"
-TAXONOMY_FILE = "../dbase/classification_books.json"
+TAXONOMY_FILE = "./dbase/classification_books.json"
 
 # Configuration de base
 DEFAULT_SECRET_ID = "openai-api-key"
@@ -86,29 +86,41 @@ def classify_with_gpt(bookinfo, taxonomy, language):
         - Ne retourne aucune explication — seulement le JSON résultant.
         - Si une catégorie ou sous-catégorie ne s'applique pas, indique sa valeur comme null.
         """
-    try:
-        # Call OpenAI API for classification
-        response = openai_client.responses.create(
+    # try:
+    # Call OpenAI API for classification
+    response = openai_client.responses.create(
             model="gpt-4o-mini",
             input=[
                 {"role": "user", "content": prompt}
             ],
             temperature=0.0
-        )
-        gpt_response = response.output_text
+    )
+    gpt_response = response.output_text
         # Remove possible code block wrappers
-        gpt_response = gpt_response.replace("```json", "").replace("```", "").strip()
+    gpt_response = gpt_response.replace("```json", "").replace("```", "").strip()
+        # Affiche la réponse brute pour debug
+        # print("Réponse GPT brute:", gpt_response)
+    try:
+        import re
+        corrected = re.sub(r'}\s*{', '}, {', gpt_response)
+        corrected = re.sub(r']\s*\[', '], [', corrected)
         return json.loads(gpt_response)
     except Exception as e:
-        raise RuntimeError(f"Erreur : {str(e)}")
+        print(f"Exception caught: {e}")
+        result = None  # or set a default value, or skip, or log, etc.
+        pass       
+    # except Exception as e:
+    #     raise RuntimeError(f"Erreur : {str(e)}")
 
 # Prepare to write results to output file
 # Clear output file and start JSON array
-with open(OUTPUT_FILE, "w", encoding="utf-8") as jf:
-    jf.write("[\n")  # Start of JSON array
+# with open(OUTPUT_FILE, "w", encoding="utf-8") as jf:
+#     jf.write("[\n")  # Start of JSON array
 
 # Iterate over each book and classify
 for idx, row in livres_df.iterrows():
+    if(idx<=2424):
+        continue
     book_id = f"book_{idx}"
 
     # Convert row to dictionary

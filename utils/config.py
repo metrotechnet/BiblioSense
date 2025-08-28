@@ -29,6 +29,7 @@ class Config:
     # Configuration des bases de données
     BOOK_DATABASE_FILE = "dbase/book_dbase.json"
     TAXONOMY_FILE = "dbase/classification_books.json"
+    QUERY_LOG_FILE = "dbase/query_log.json"
 
 class DevelopmentConfig(Config):
     """Configuration pour le développement"""

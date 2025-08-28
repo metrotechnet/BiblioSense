@@ -4,6 +4,7 @@ fetchGoogleLivre.py
 
 Script pour extraire les informations des 10000 romans les plus récents 
 depuis l'API Google Books et les sauvegarder en JSON.
+MODIFIÉ: Filtrage renforcé pour les livres français uniquement
 """
 
 import requests
@@ -12,21 +13,22 @@ import time
 from datetime import datetime, timedelta
 import os
 from urllib.parse import quote
+import re
+from collections import Counter
+
 
 # -------- Configuration --------
 OUTPUT_FILE = "dbase/google_books_romans.json"
 MAX_BOOKS = 10000  # Nombre maximum de livres à extraire
-BATCH_SIZE = 40    # Nombre de livres par requête API (max 40 pour Google Books)
+BATCH_SIZE = 40    # Nombre de livres par requête API (max 50 pour Google Books)
 DELAY = 1          # Délai entre les requêtes (en secondes)
-API_KEY = ""       # Optionnel: clé API Google Books pour plus de requêtes
+API_KEY = "AIzaSyAbbIh2GUofeSbDO2cw-yqXKTeMA4YKKCQ"       # Optionnel: clé API Google Books pour plus de requêtes
 
 # Catégories de fiction/romans en français et anglais
 FICTION_CATEGORIES = [
     "fiction",
     "roman", 
     "novel",
-    "literature",
-    "littérature",
     "fantasy",
     "science fiction",
     "mystery",
@@ -41,7 +43,7 @@ FICTION_CATEGORIES = [
 # Langues à inclure
 LANGUAGES = ["fr"]
 
-def get_google_books_api_url(query, start_index=0, max_results=40, order_by="newest"):
+def get_google_books_api_url(query, lang, start_index=0, max_results=40, order_by="newest"):
     """
     Construit l'URL pour l'API Google Books
     
@@ -56,10 +58,10 @@ def get_google_books_api_url(query, start_index=0, max_results=40, order_by="new
     """
     base_url = "https://www.googleapis.com/books/v1/volumes"
     
-    # Construire la requête avec filtres
+    # Construire la requête avec filtres - AJOUT langRestrict=fr
     encoded_query = quote(query)
-    url = f"{base_url}?q={encoded_query}&orderBy={order_by}&maxResults={max_results}&startIndex={start_index}"
-    
+    url = f"{base_url}?q={encoded_query}&langRestrict={lang}&orderBy={order_by}&maxResults={max_results}&startIndex={start_index}"
+
     # Ajouter la clé API si disponible
     if API_KEY:
         url += f"&key={API_KEY}"
@@ -84,9 +86,15 @@ def extract_book_info(book_item):
     author = ", ".join(authors) if isinstance(authors, list) else str(authors)
     
     # Description/résumé
-    description = volume_info.get("description", "")
-    if len(description) > 1000:  # Limiter la longueur
-        description = description[:1000] + "..."
+    synopsis = volume_info.get("description", "")
+
+    # Nettoyer et améliorer le synopsis
+    if synopsis:
+        # Supprimer les balises HTML éventuelles
+        import re
+        synopsis = re.sub(r'<[^>]+>', '', synopsis)
+    else:
+        synopsis = ""
     
     # Informations de publication
     publisher = volume_info.get("publisher", "Éditeur inconnu")
@@ -124,7 +132,7 @@ def extract_book_info(book_item):
         "id": book_id,
         "titre": title,
         "auteur": author,
-        "resume": description,
+        "resume": synopsis,
         "editeur": publisher,
         "parution": published_date,
         "pages": str(page_count) if page_count > 0 else "Inconnu",
@@ -136,7 +144,7 @@ def extract_book_info(book_item):
         "source": "Google Books API"
     }
 
-def search_books_by_query(query, max_books_per_query=1000):
+def search_books_by_query(query, lang, max_books_per_query=1000):
     """
     Recherche des livres pour une requête spécifique
     
@@ -159,7 +167,7 @@ def search_books_by_query(query, max_books_per_query=1000):
             max_results = min(BATCH_SIZE, remaining)
             
             # Construire l'URL de l'API
-            url = get_google_books_api_url(query, start_index, max_results)
+            url = get_google_books_api_url(query, lang, start_index, max_results)
             
             # Faire la requête
             print(f"   📡 Requête API: index {start_index}, résultats {max_results}")
@@ -171,6 +179,9 @@ def search_books_by_query(query, max_books_per_query=1000):
                     print("   ⏳ Rate limit atteint, attente 60 secondes...")
                     time.sleep(60)
                     continue
+                elif response.status_code == 403:
+                    print("   🔑 Erreur 403: Vérifiez votre clé API ou les quotas")
+                    break
                 else:
                     break
             
@@ -181,17 +192,22 @@ def search_books_by_query(query, max_books_per_query=1000):
                 print(f"   ✅ Aucun livre supplémentaire trouvé")
                 break
             
-            # Traiter chaque livre
+            # Traiter chaque livre - AJOUT DEBUG
             for item in items:
                 try:
                     book_info = extract_book_info(item)
                     
-                    # Filtrer les livres (optionnel: vérifier si c'est vraiment de la fiction)
-                    if is_fiction_book(book_info):
+                    # Debug: afficher la langue détectée pour les premiers livres
+                    # if len(books) < 5:
+                    #     print(f"   🔍 Debug: '{book_info['titre']}' - Langue: '{book_info['langue']}'")
+                    
+                    # Filtrer les livres (vérifier si c'est de la fiction française)
+                    # if is_fiction_book(book_info):
+                    if book_info["langue"] == lang and is_fiction_book(book_info):
                         books.append(book_info)
-                        
-                        if len(books) % 100 == 0:
-                            print(f"   📚 {len(books)} livres extraits...")
+
+                    if len(books) > 0 and len(books) % 100 == 0:
+                        print(f"   📚 {len(books)} livres extraits...")
                             
                 except Exception as e:
                     print(f"   ⚠️  Erreur extraction livre: {e}")
@@ -215,14 +231,19 @@ def search_books_by_query(query, max_books_per_query=1000):
 
 def is_fiction_book(book_info):
     """
-    Vérifie si un livre est probablement de la fiction
+    Vérifie si un livre est probablement de la fiction ET en français
     
     Args:
         book_info (dict): Informations du livre
         
     Returns:
-        bool: True si le livre semble être de la fiction
+        bool: True si le livre semble être de la fiction en français
     """
+    # D'abord vérifier la langue - CRITIQUE pour éviter les livres anglais
+    language = book_info.get("langue", "").lower()
+    if language and language not in ["fr", "french", "français"]:
+        return False
+    
     # Vérifier les catégories
     category = book_info.get("categorie", "").lower()
     fiction_keywords = [
@@ -277,6 +298,7 @@ def main():
     print("🚀 Début de l'extraction des romans depuis Google Books API")
     print(f"🎯 Objectif: {MAX_BOOKS} livres maximum")
     print(f"📁 Fichier de sortie: {OUTPUT_FILE}")
+    print("🇫🇷 FILTRAGE FRANÇAIS RENFORCÉ ACTIVÉ")
     print("-" * 60)
     
     all_books = []
@@ -291,18 +313,18 @@ def main():
                 if len(all_books) >= MAX_BOOKS:
                     break
                     
-                # Construire la requête avec filtres
-                query = f"subject:{category} language:{lang}"
+                # Construire la requête SIMPLIFIÉE (langRestrict dans URL)
+                query = f"subject:{category}"
                 
                 # Calculer combien de livres extraire pour cette requête
                 remaining_books = MAX_BOOKS - len(all_books)
                 max_books_this_query = min(books_per_category // len(LANGUAGES), remaining_books)
                 
-                if max_books_this_query <= 0:
-                    break
+                # if max_books_this_query <= 0:
+                #     break
                 
                 # Rechercher les livres
-                category_books = search_books_by_query(query, max_books_this_query)
+                category_books = search_books_by_query(query, lang, max_books_this_query)
                 
                 # Éviter les doublons (basé sur titre + auteur)
                 existing_keys = {(book['titre'], book['auteur']) for book in all_books}
@@ -313,7 +335,7 @@ def main():
                 print(f"   ➕ {len(new_books)} nouveaux livres ajoutés (total: {len(all_books)})")
                 
                 # Sauvegarder périodiquement
-                if len(all_books) % 500 == 0:
+                if len(all_books) % 100 == 0:
                     print(f"💾 Sauvegarde intermédiaire: {len(all_books)} livres")
                     save_books_to_json(all_books, OUTPUT_FILE.replace('.json', '_temp.json'))
             

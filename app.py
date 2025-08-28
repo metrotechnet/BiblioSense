@@ -48,7 +48,7 @@ app_config = get_config()
 # Paths to JSON files for taxonomy and book data
 BOOK_DATABASE_FILE = app_config.BOOK_DATABASE_FILE
 TAXONOMY_FILE = app_config.TAXONOMY_FILE
-QUERY_LOG_FILE = "dbase/query_log.json"
+QUERY_LOG_FILE = app_config.QUERY_LOG_FILE
 
 # Configuration de base
 DEFAULT_SECRET_ID = app_config.DEFAULT_SECRET_ID

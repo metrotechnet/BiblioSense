@@ -206,17 +206,15 @@ def main():
     print("=" * 60)
     
     # Définir les chemins (script exécuté depuis le dossier pretnumerique)
-    pretnumerique_dir = Path(".")  # Dossier courant
-    output_file = "../dbase/prenumerique_complet.json"
-    stats_file = "../dbase/prenumerique_statistiques.json"
+    pretnumerique_dir = Path("pretnumerique_dbase")  
+    output_file = "./dbase/prenumerique_complet.json"
+    stats_file = "./dbase/prenumerique_statistiques.json"
     
     # Vérifier que le dossier pretnumerique existe
     if not pretnumerique_dir.exists():
         print(f"❌ Le dossier {pretnumerique_dir} n'existe pas.")
         return
-    
-    # Créer le dossier dbase s'il n'existe pas
-    Path("../dbase").mkdir(exist_ok=True)
+
     
     # Collecter tous les fichiers JSON
     json_files = list(pretnumerique_dir.glob("*.json"))
