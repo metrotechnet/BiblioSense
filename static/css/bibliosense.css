@@ -1,9 +1,24 @@
-body {
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-    margin: 0;
+html, body {
+  height: 100%;
+  margin: 0;
 }
+body {
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 
+}
+#list-container {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  width:100%; 
+  overflow-y:auto; 
+  background:#fff; 
+  padding:24px 18px 18px 18px;
+}
 /* Node circle appearance in the D3 graph */
 .node circle {
     fill: #69b3a2;
