@@ -86,7 +86,8 @@ def get_secret(secret_name, project_id=None):
 
         # Construire le nom de la ressource du secret
         name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-        
+        # projects/839768889169/secrets/openai-api-key
+
         # Récupérer le secret
         response = client.access_secret_version(request={"name": name})
         
