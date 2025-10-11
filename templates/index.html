@@ -24,7 +24,6 @@
       <h2 class="mobile-title" style="margin: 0;">BiblioSense – l'assistant qui <em>comprend</em> les bibliothèques.</h2>
       {% if selected_database %}
       <div class="mt-1">
-        <small class="text-muted">Base de données: </small>
         <span class="badge bg-primary">
           {% if selected_database == 'quebec' %}Québec{% elif selected_database == 'montreal' %}Montréal{% else %}{{ selected_database|title }}{% endif %}
         </span>
