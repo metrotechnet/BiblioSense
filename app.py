@@ -21,7 +21,9 @@ app_config = get_config()
 
 # Global variables to store loaded data
 taxonomy_data = None
-books_data = None
+books_data_quebec = None
+books_data_montreal = None
+
 # Dictionary to store filtered results per session
 user_filtered_books = {}
 openai_client = None
@@ -46,7 +48,8 @@ session_cleanup = None
 app_config = get_config()
 
 # Paths to JSON files for taxonomy and book data
-BOOK_DATABASE_FILE = app_config.BOOK_DATABASE_FILE
+BOOK_DATABASE_QUEBEC = app_config.BOOK_DATABASE_QUEBEC
+BOOK_DATABASE_MONTREAL = app_config.BOOK_DATABASE_MONTREAL
 TAXONOMY_FILE = app_config.TAXONOMY_FILE
 QUERY_LOG_FILE = app_config.QUERY_LOG_FILE
 
@@ -62,7 +65,7 @@ def init_data():
     Initialize and load taxonomy and book data from JSON files.
     This function should be called once at application startup.
     """
-    global taxonomy_data, books_data
+    global taxonomy_data,   books_data_quebec, books_data_montreal  
     
     try:
         # Load taxonomy data
@@ -71,16 +74,35 @@ def init_data():
         print(f"✅ Taxonomy data loaded from {TAXONOMY_FILE}")
         
         # Load book data
-        with open(BOOK_DATABASE_FILE, "r", encoding="utf-8") as f:
-            books_data = json.load(f)
-        print(f"✅ Book data loaded from {BOOK_DATABASE_FILE} ({len(books_data)} books)")
-        # reorder book by alphabetical order of title
-        # books_data.sort(key=lambda x: x.get("titre", "").lower())
+        with open(BOOK_DATABASE_QUEBEC, "r", encoding="utf-8") as f:
+            books_data_quebec = json.load(f)
+        print(f"✅ Book data loaded from {BOOK_DATABASE_QUEBEC} ({len(books_data_quebec)} books)")
+        with open(BOOK_DATABASE_MONTREAL, "r", encoding="utf-8") as f:
+            books_data_montreal = json.load(f)
+        print(f"✅ Book data loaded from {BOOK_DATABASE_MONTREAL} ({len(books_data_montreal)} books)")
+        # books_data_quebec.sort(key=lambda x: x.get("titre", "").lower())
 
         
     except Exception as e:
         print(f"❌ Error loading data: {e}")
         raise
+
+def get_selected_books_data(database='quebec'):
+    """
+    Get the selected books database.
+    
+    Args:
+        database (str): Either 'quebec' or 'montreal'
+        
+    Returns:
+        list: The selected books data
+    """
+    global books_data_quebec, books_data_montreal
+    
+    if database.lower() == 'montreal':
+        return books_data_montreal
+    else:  # default to quebec
+        return books_data_quebec
 
 def init_openai_client():
     """
@@ -160,25 +182,77 @@ def create_app():
     @app.route("/")
     def index():
         """
-        Render the main graph visualization page.
+        Render the database selection page or main app based on database parameter.
         """
+        # Check if database is specified in URL parameters
+        selected_database = request.args.get('database')
+        
+        # If no database specified, redirect to database selection page
+        if not selected_database:
+            return render_template("database_select.html")
+        
+        # Validate selected database
+        if selected_database not in ['quebec', 'montreal']:
+            return render_template("database_select.html")
+        
         # Ensure user has a session from the very first page load
         if 'user_id' not in session:
             session['user_id'] = str(uuid.uuid4())
-            print(f"🆔 New session created: {session['user_id']}")
+            print(f"🆔 New session created: {session['user_id']} (Database: {selected_database})")
         else:
-            print(f"🔄 Existing session: {session['user_id']}")
+            print(f"🔄 Existing session: {session['user_id']} (Database: {selected_database})")
+        
+        # Store selected database in session
+        session['selected_database'] = selected_database
             
-        return render_template("index.html")
+        return render_template("index.html", selected_database=selected_database)
     
+    @app.route("/select-database")
+    def select_database_page():
+        """
+        Render the database selection page explicitly.
+        """
+        return render_template("database_select.html")
+    
+    # create a service that returns available databases
+    @app.route("/databases")
+    def list_databases():
+        """
+        Return available databases with their book counts.
+        """
+        global books_data_quebec, books_data_montreal
+        return jsonify({
+            "databases": {
+                "quebec": {
+                    "name": "Québec",
+                    "count": len(books_data_quebec) if books_data_quebec else 0,
+                    "file": BOOK_DATABASE_QUEBEC
+                },
+                "montreal": {
+                    "name": "Montréal", 
+                    "count": len(books_data_montreal) if books_data_montreal else 0,
+                    "file": BOOK_DATABASE_MONTREAL
+                }
+            },
+            "default": "quebec"
+        })
+
     # create a service that returns the number of books
     @app.route("/count_books")
-    def count_books():
+    @app.route("/count_books/<database>")
+    def count_books(database='quebec'):
         """
         Return the total number of books in the database.
+        
+        Args:
+            database (str): Either 'quebec' or 'montreal'
         """
-        global books_data
-        return jsonify({"count": len(books_data)})  # Return the total book count
+        selected_books = get_selected_books_data(database)
+        return jsonify({
+            "count": len(selected_books), 
+            "database": database,
+            "available_databases": ["quebec", "montreal"]
+        })
 
     @app.route("/session_info")
     def session_info():
@@ -217,19 +291,25 @@ def create_app():
     @app.route("/books")
     @app.route("/books/<int:index>")
     @app.route("/books/<int:start>/<int:end>")
-    def books_data_route(index=None, start=None, end=None):
+    @app.route("/books/<database>")
+    @app.route("/books/<database>/<int:index>")
+    @app.route("/books/<database>/<int:start>/<int:end>")
+    def books_data_route(database='quebec', index=None, start=None, end=None):
         """
         Return the book graph data (nodes and edges) as JSON for the frontend.
         
         Routes:
-        - /books: Return all books
+        - /books: Return all books (Quebec database by default)
+        - /books/<database>: Return all books from selected database (quebec/montreal)
         - /books/<index>: Return a specific book by index
+        - /books/<database>/<index>: Return a specific book by index from selected database
         - /books/<start>/<end>: Return books from start to end index (inclusive)
+        - /books/<database>/<start>/<end>: Return books from start to end index from selected database
         
         Query Parameters:
-        - source: 'all' (default) for books_data or 'filtered' for filtered_books
+        - source: 'all' (default) for selected database or 'filtered' for filtered_books
         """
-        global books_data, user_filtered_books
+        global user_filtered_books
         
         # Session should already exist from index route, but safety check
         if 'user_id' not in session:
@@ -245,6 +325,10 @@ def create_app():
         # Get source parameter (default to 'all')
         source = request.args.get('source', 'all').lower()
         
+        # Get database from query parameter if not in URL path
+        if database == 'quebec' and request.args.get('database'):
+            database = request.args.get('database')
+        
         # Select the appropriate data source
         if source == 'filtered':
             if user_id not in user_filtered_books or user_filtered_books[user_id] is None:
@@ -252,8 +336,8 @@ def create_app():
             current_books = user_filtered_books[user_id]
             source_name = "filtered books"
         else:
-            current_books = books_data
-            source_name = "all books"
+            current_books = get_selected_books_data(database)
+            source_name = f"all books ({database})"
         
         # Return specific book by index
         if index is not None:
@@ -262,6 +346,7 @@ def create_app():
                     "book": current_books[index], 
                     "index": index,
                     "source": source,
+                    "database": database,
                     "total_count": len(current_books),
                     "user_id": user_id
                 }
@@ -277,6 +362,7 @@ def create_app():
                 "book_list": current_books[start:end+1], 
                 "range": {"start": start, "end": end, "count": end - start + 1},
                 "source": source,
+                "database": database,
                 "total_count": len(current_books),
                 "user_id": user_id
             }
@@ -285,6 +371,7 @@ def create_app():
         return {
             "book_list": current_books,
             "source": source,
+            "database": database,
             "total_count": len(current_books),
             "user_id": user_id
         }
@@ -308,7 +395,7 @@ def create_app():
         """
         # ==================== INITIALIZATION & THROTTLING ====================
         start_time = time.time()
-        global taxonomy_data, books_data, openai_client, user_filtered_books, performance_monitor, gpt_cache
+        global taxonomy_data, openai_client, user_filtered_books, performance_monitor, gpt_cache
         
         # Performance throttling check - prevent system overload
         should_throttle, throttle_reason = performance_monitor.should_throttle()
@@ -326,12 +413,17 @@ def create_app():
         user_id = session['user_id']
         data = request.get_json()
         query_text = data.get("query", "")
+        # Use database from request, session, or default to Quebec
+        selected_database = data.get("database") or session.get('selected_database', 'quebec')
+        
+        # Get the selected books database
+        current_books = get_selected_books_data(selected_database)
         
         # Update session activity for cleanup tracking
         if session_cleanup:
             session_cleanup.update_session_activity(user_id)
         
-        print(f"🔍 Processing query for user {user_id}: '{query_text}'")
+        print(f"🔍 Processing query for user {user_id}: '{query_text}' (Database: {selected_database}, {len(current_books)} books)")
 
         try:
             # ==================== PHASE 1: GPT KEYWORD EXTRACTION ====================
@@ -356,7 +448,7 @@ def create_app():
 
             # Multi-tier filtering: separate title/author matches from general keyword matches
             title_author_matches, other_keyword_matches = filter_books_by_keywords(
-                books_data, keyword_items, title_author_fields
+                current_books, keyword_items, title_author_fields
             )
             
             keyword_filter_time = time.time() - keyword_filter_start
@@ -422,7 +514,7 @@ def create_app():
             if len(merged_taxonomy) > 0:
                 title_author_book_ids = {book["id"] for book in title_author_matches}
                 taxonomy_matches = find_taxonomy_matches(
-                    books_data, merged_taxonomy, title_author_book_ids
+                    current_books, merged_taxonomy, title_author_book_ids
                 )      
                 # Combine all results: prioritized matches + taxonomy expansions
                 filtered_books.extend(taxonomy_matches)
@@ -529,6 +621,7 @@ def create_app():
                 return jsonify({
                     "description": description_result.get("Description", "Aucune description disponible"),
                     "user_id": user_id,
+                    "database": selected_database,
                     "total_books": 0,
                     "performance": {
                         "total_time": round(total_time, 3),
@@ -543,6 +636,7 @@ def create_app():
                 return jsonify({
                     "description": description_result.get("Description", "Aucune description disponible"),
                     "user_id": user_id,
+                    "database": selected_database,
                     "total_books": len(filtered_books),
                     "performance": {
                         "total_time": round(total_time, 3),
@@ -562,6 +656,7 @@ def create_app():
             return jsonify({
                 "error": "Invalid response format from classification service",
                 "user_id": user_id,
+                "database": selected_database,
                 "performance": {"response_time": round(total_time, 3), "error": True}
             }), 500
             
@@ -575,6 +670,7 @@ def create_app():
             return jsonify({
                 "error": "Classification service temporarily unavailable",
                 "user_id": user_id,
+                "database": selected_database,
                 "performance": {"response_time": round(total_time, 3), "error": True}
             }), 500
     

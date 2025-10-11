@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BiblioSense - Sélection de Base de Données</title>
+  
+  <!-- Prevent favicon requests -->
+  <link rel="icon" href="data:,">
+  
+  <!-- Add Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Add Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link href="/static/css/bibliosense.css" rel="stylesheet">
+  
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .selection-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      margin: 20px;
+    }
+    
+    .database-option {
+      border: 2px solid #e9ecef;
+      border-radius: 15px;
+      padding: 2rem;
+      margin: 1rem 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+    
+    .database-option:hover {
+      border-color: #007bff;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 123, 255, 0.1);
+    }
+    
+    .database-option.selected {
+      border-color: #007bff;
+      background: #f8fdff;
+    }
+    
+    .database-icon {
+      font-size: 3rem;
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+    
+    .database-count {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .logo {
+      height: 80px;
+      margin-bottom: 1rem;
+    }
+    
+    .loading {
+      display: none;
+    }
+    
+    .btn-continue {
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      border: none;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-continue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="selection-card">
+    <!-- Logo and Title -->
+    <div class="logo-container">
+      <img src="/static/images/BiblioSense_logo.png" alt="BiblioSense Logo" class="logo">
+      <h1 class="h2 text-primary mb-0">BiblioSense</h1>
+      <p class="text-muted">Choisissez votre base de données</p>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div id="loading" class="loading text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p class="mt-2">Chargement des informations...</p>
+    </div>
+    
+    <!-- Database options -->
+    <div id="database-options">
+      <!-- Will be populated by JavaScript -->
+    </div>
+    
+    <!-- Continue button -->
+    <div class="text-center mt-4">
+      <button id="continue-btn" class="btn btn-primary btn-continue" disabled>
+        <i class="bi bi-arrow-right me-2"></i>
+        Continuer
+      </button>
+    </div>
+    
+    <!-- Footer -->
+    <div class="text-center mt-4">
+      <small class="text-muted">
+        Vous pourrez changer de base de données à tout moment
+      </small>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    let selectedDatabase = null;
+    let databasesInfo = {};
+    
+    // Load database information on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDatabaseInfo();
+    });
+    
+    async function loadDatabaseInfo() {
+      const loading = document.getElementById('loading');
+      const options = document.getElementById('database-options');
+      const continueBtn = document.getElementById('continue-btn');
+      
+      try {
+        loading.style.display = 'block';
+        options.style.display = 'none';
+        
+        const response = await fetch('/databases');
+        const data = await response.json();
+        databasesInfo = data.databases;
+        
+        // Create database option cards with proper French names
+        const optionsHtml = Object.entries(databasesInfo).map(([key, info]) => {
+          const displayName = key === 'quebec' ? 'Québec' : key === 'montreal' ? 'Montréal' : info.name;
+          return `
+          <div class="database-option" data-database="${key}" onclick="selectDatabase('${key}')">
+            <div class="text-center">
+              <div class="database-icon">
+                <i class="bi ${key === 'quebec' ? 'bi-flag' : 'bi-building'}"></i>
+              </div>
+              <h4 class="mb-2">${displayName}</h4>
+              <p class="mb-1">Bibliothèque de ${displayName}</p>
+              <div class="database-count">
+                <i class="bi bi-book me-1"></i>
+                ${info.count.toLocaleString()} livres disponibles
+              </div>
+            </div>
+          </div>
+        `;}).join('');
+        
+        options.innerHTML = optionsHtml;
+        
+        // Auto-select default database
+        if (data.default) {
+          selectDatabase(data.default);
+        }
+        
+        loading.style.display = 'none';
+        options.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Erreur lors du chargement des bases de données:', error);
+        options.innerHTML = `
+          <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Erreur lors du chargement des bases de données. Veuillez réessayer.
+          </div>
+        `;
+        loading.style.display = 'none';
+        options.style.display = 'block';
+      }
+    }
+    
+    function selectDatabase(database) {
+      // Remove previous selection
+      document.querySelectorAll('.database-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+      
+      // Add selection to clicked option
+      const option = document.querySelector(`[data-database="${database}"]`);
+      if (option) {
+        option.classList.add('selected');
+        selectedDatabase = database;
+        
+        // Enable continue button
+        const continueBtn = document.getElementById('continue-btn');
+        continueBtn.disabled = false;
+        continueBtn.onclick = () => continueToApp();
+      }
+    }
+    
+    function continueToApp() {
+      if (selectedDatabase) {
+        // Store selected database in localStorage for persistence
+        localStorage.setItem('selectedDatabase', selectedDatabase);
+        
+        // Redirect to main app with database parameter
+        window.location.href = `/?database=${selectedDatabase}`;
+      }
+    }
+    
+    // Handle keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && selectedDatabase) {
+        continueToApp();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ import json
 
 # -------- Configuration --------
 # Base URL pattern for pretnumerique.ca with fiction categories and pagination
-BASE_URL_PATTERN = "https://quebec.pretnumerique.ca/resources?alphanumeric_title_first_character={}&availability=_unselected&category=F&category_standard=thema&page={}&sort_by=title_sort"
+BASE_URL_PATTERN = "https://montreal.pretnumerique.ca/resources?alphanumeric_title_first_character={}&availability=_unselected&category=F&category_standard=thema&page={}&sort_by=title_sort"
 
 CATEGORIES = [
     ("0-9", "digit.json"),

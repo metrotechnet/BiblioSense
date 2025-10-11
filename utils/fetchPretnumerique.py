@@ -8,40 +8,85 @@ from bs4 import BeautifulSoup
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 import json
-
+BIB_CITY = "montreal"  # Change to "quebec" for quebec.pretnumerique.ca
 # -------- Configuration --------
 # Base URL pattern for pretnumerique.ca with fiction categories and pagination
-BASE_URL_PATTERN = "https://quebec.pretnumerique.ca/resources?alphanumeric_title_first_character={}&availability=_unselected&category=F&category_standard=thema&page={}&sort_by=title_sort"
+BASE_URL_PATTERN = f"https://{BIB_CITY}.pretnumerique.ca/resources?availability=_unselected&category={{}}&category_standard=thema&page={{}}&sort_by=title_sort"
 
 CATEGORIES = [
-    ("0-9", "digit.json"),
-    ("a", "a.json"), 
-    ("b", "b.json"),
-    ("c", "c.json"),
-    ("d", "d.json"),
-    ("e", "e.json"),
-    ("f", "f.json"),
-    ("g", "g.json"),
-    ("h", "h.json"),
-    ("i", "i.json"),
-    ("j", "j.json"),
-    ("k", "k.json"),
-    ("l", "l.json"),
-    ("m", "m.json"),
-    ("n", "n.json"),
-    ("o", "o.json"),
-    ("p", "p.json"),
-    ("q", "q.json"),
-    ("r", "r.json"),
-    ("s", "s.json"),
-    ("t", "t.json"),
-    ("u", "u.json"),
-    ("v", "v.json"),
-    ("w", "w.json"),
-    ("x", "x.json"),
-    ("y", "y.json"),
-    ("z", "z.json")
+    ("FM", "FM.json"),
+    ("FMH", "FMH.json"),
+    ("FMK", "FMK.json"),
+    ("FMX", "FMX.json"),
+    ("FMM", "FMM.json"),
+    ("FMR", "FMR.json"),
+    ("FB", "FB.json"),
+    ("FBC", "FBC.json"),
+    ("FS", "FS.json"),
+    ("FQ", "FQ.json"),
+    ("FJ", "FJ.json"),
+    ("FK", "FK.json"),
+    ("FKW", "FKW.json"),
+    ("FP", "FP.json"),
+    ("FU", "FU.json"),
+    ("FFJ", "FFJ.json"),
+    ("FFP", "FFP.json"),
+    ("FFS", "FFS.json"),
+    ("FFH", "FFH.json"),
+    ("FFL", "FFL.json"),
+    ("FFS", "FFS.json"),
+    ("FFC", "FFC.json"),
+    ("FW", "FW.json"),
+    ("FRX", "FRX.json"),
+    ("FRH", "FRH.json"),
+    ("FRD", "FRD.json"),
+    ("FRM", "FRM.json"),
+    ("FD", "FD.json"),
+    ("FT", "FT.json"),
+    ("FLM", "FLM.json"),
+    ("FLU", "FLU.json"),
+    ("FLQ", "FLQ.json"),
+    ("FLR", "FLR.json"),
+    ("FLS", "FLS.json"),
+    ("FLG", "FLG.json"),
+    ("FL", "FL.json"),
+    ("FH", "FH.json"),
+    ("FHK", "FHK.json"),
+    ("FHD", "FHD.json"),
+    ("FHP", "FHP.json"),
+    ("FHX", "FHX.json")
+
 ]
+
+# CATEGORIES = [
+#     ("0-9", "digit.json"),
+#     ("a", "a.json"), 
+#     ("b", "b.json"),
+#     ("c", "c.json"),
+#     ("d", "d.json"),
+#     ("e", "e.json"),
+#     ("f", "f.json"),
+#     ("g", "g.json"),
+#     ("h", "h.json"),
+#     ("i", "i.json"),
+#     ("j", "j.json"),
+#     ("k", "k.json"),
+#     ("l", "l.json"),
+#     ("m", "m.json"),
+#     ("n", "n.json"),
+#     ("o", "o.json"),
+#     ("p", "p.json"),
+#     ("q", "q.json"),
+#     ("r", "r.json"),
+#     ("s", "s.json"),
+#     ("t", "t.json"),
+#     ("u", "u.json"),
+#     ("v", "v.json"),
+#     ("w", "w.json"),
+#     ("x", "x.json"),
+#     ("y", "y.json"),
+#     ("z", "z.json")
+# ]
 
 # Generate BASE_URL and OUTPUT_FILE lists with pagination (pages 1-25)
 BASE_URL = []
@@ -50,7 +95,7 @@ OUTPUT_FILE = []
 for cat, filename_base in CATEGORIES:
     for page in range(1, 26):  # Pages 1 to 25
         url = BASE_URL_PATTERN.format(cat, page)
-        output_file = f"dbase/{filename_base.replace('.json', '')}_page_{page:02d}.json"
+        output_file = f"dbase/montreal/{filename_base.replace('.json', '')}_page_{page:02d}.json"
         BASE_URL.append(url)
         OUTPUT_FILE.append(output_file)
 
@@ -99,8 +144,8 @@ def scrape_category(base_url, output_file):
 
     # Extract all book links from the current page (no pagination loop needed since we're targeting specific pages)
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    book_links = [f"https://quebec.pretnumerique.ca{a['href']}" for a in soup.select(".details-content__actions a") if a.get("href")]
-    
+    book_links = [f"https://{BIB_CITY}.pretnumerique.ca{a['href']}" for a in soup.select(".details-content__actions a") if a.get("href")]
+
     if not book_links:
         print(f"Aucun livre trouvé sur cette page")
     else:

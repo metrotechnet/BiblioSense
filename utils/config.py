@@ -27,7 +27,8 @@ class Config:
     PROJECT_ID = "bibliosense-467520"
     
     # Configuration des bases de données
-    BOOK_DATABASE_FILE = "dbase/book_dbase.json"
+    BOOK_DATABASE_QUEBEC = "dbase/book_dbase_quebec.json"
+    BOOK_DATABASE_MONTREAL = "dbase/book_dbase_montreal.json"
     TAXONOMY_FILE = "dbase/classification_books.json"
     QUERY_LOG_FILE = "dbase/query_log.json"
 

@@ -20,7 +20,20 @@
 <div class="d-flex align-items-center justify-content-between mobile-header" style="background: #f5f5f5; border-bottom: 1px solid #eee; padding: 12px 18px; margin: 0;">
   <div class="d-flex align-items-center">
     <img src="/static/images/BiblioSense_logo.png" alt="BiblioSense Logo" class="mobile-logo" style="height: 100px; margin-right: 15px;">
-    <h2 class="mobile-title" style="margin: 0;">BiblioSense – l'assistant qui <em>comprend</em> les bibliothèques.</h2>
+    <div>
+      <h2 class="mobile-title" style="margin: 0;">BiblioSense – l'assistant qui <em>comprend</em> les bibliothèques.</h2>
+      {% if selected_database %}
+      <div class="mt-1">
+        <small class="text-muted">Base de données: </small>
+        <span class="badge bg-primary">
+          {% if selected_database == 'quebec' %}Québec{% elif selected_database == 'montreal' %}Montréal{% else %}{{ selected_database|title }}{% endif %}
+        </span>
+        <a href="/select-database" class="btn btn-sm btn-outline-secondary ms-2" title="Changer de base de données">
+          <i class="bi bi-arrow-left-right"></i> Changer
+        </a>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 
@@ -71,7 +84,7 @@
     </div>
     <div style="margin-top: 30px;">
       <p style="color: #666; font-style: italic;">
-        Ceci est un site de démonstration et ne contient que des oeuvres de fiction (environ 12 000). <br> Pour toute information, <a href="mailto:denis_boulanger@hotmail.com">contactez-nous</a>)
+        Ceci est un site de démonstration. <br> Pour toute information, <a href="mailto:denis_boulanger@hotmail.com">contactez-nous</a>)
       </p>
     </div>
   </div>
@@ -84,5 +97,40 @@
 <script src="/static/js/dataService.js"></script>
 <script src="/static/js/domService.js"></script>
 <script src="/static/js/bibliosense.js"></script>
+
+<script>
+  // Get selected database from URL or template
+  const urlParams = new URLSearchParams(window.location.search);
+  let selectedDatabase = urlParams.get('database') || '{{ selected_database }}' || 'quebec';
+  
+  // Store in localStorage for persistence
+  if (selectedDatabase) {
+    localStorage.setItem('selectedDatabase', selectedDatabase);
+  }
+  
+  // Override the search function to include database parameter
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    // If this is a filter request, add database parameter
+    if (url.includes('/filter') && options.method === 'POST') {
+      const body = JSON.parse(options.body || '{}');
+      body.database = selectedDatabase;
+      options.body = JSON.stringify(body);
+    }
+    
+    // If this is a books request, modify URL to include database
+    if (url.includes('/books') && !url.includes('/books/' + selectedDatabase)) {
+      // Add database to URL if not already present
+      const separator = url.includes('?') ? '&' : '?';
+      if (!url.includes('database=')) {
+        url += `${separator}database=${selectedDatabase}`;
+      }
+    }
+    
+    return originalFetch(url, options);
+  };
+  
+  console.log('🔧 Database selection initialized:', selectedDatabase);
+</script>
 </body>
 </html>

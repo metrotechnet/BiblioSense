@@ -9,6 +9,7 @@ dbase/old/*
 dbase/sessions_backup.json
 dbase/sessions.json
 dbase/query_log.json
+pretnumerique_dbase/
 
 # Documentation et fichiers temporaires
 PHASE2_README.md
