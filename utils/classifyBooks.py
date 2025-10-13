@@ -8,8 +8,8 @@ from config import  get_secret
 # Configure your OpenAI API key
 #
     
-BOOK_DATABASE = "./dbase/prenumerique_montreal_complet.json"
-OUTPUT_FILE = "book_dbase_montreal.json"
+BOOK_DATABASE = "./dbase/prenumerique_montreal_complet2.json"
+OUTPUT_FILE = "./dbase/book_dbase_montreal2.json"
 TAXONOMY_FILE = "./dbase/classification_books.json"
 
 # Configuration de base
@@ -180,8 +180,9 @@ def classify_books(start_index=0, end_index=None):
         book_dict = row.to_dict()
 
         # Prepare book data structure
-        book_data = {"id": book_id, "label": row['titre'], "type": "book"}
-        book_data.update(book_dict)
+        book_data["id"] =book_id
+        book_data["label"] = row['titre']
+        book_data["type"] ="book"
         
         try:
             # Classify the book using GPT

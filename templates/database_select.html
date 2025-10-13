@@ -23,6 +23,16 @@
       align-items: center;
       justify-content: center;
       padding: 10px;
+      overflow-y: auto;
+    }
+    
+    /* Allow scrolling when content is taller than viewport */
+    @media screen and (max-height: 800px) {
+      body {
+        align-items: flex-start;
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
     }
     
     .selection-card {
@@ -33,6 +43,8 @@
       max-width: 600px;
       width: 100%;
       margin: 20px auto;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
     }
     
     .database-option {
@@ -149,7 +161,7 @@
       .selection-card {
         max-width: 100%;
         padding: 2rem;
-        margin: 10px;
+        margin: 20px auto;
         border-radius: 15px;
       }
       
@@ -195,7 +207,7 @@
       
       .selection-card {
         padding: 1.5rem;
-        margin: 5px;
+        margin: 10px auto;
         border-radius: 12px;
       }
       
@@ -298,6 +310,38 @@
       .logo {
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
+      }
+    }
+    
+    /* Very short screens (height less than 600px) */
+    @media screen and (max-height: 600px) {
+      body {
+        align-items: flex-start;
+        padding: 5px;
+      }
+      
+      .selection-card {
+        margin: 5px auto;
+        padding: 1.5rem;
+        max-height: calc(100vh - 10px);
+      }
+      
+      .logo {
+        height: 40px;
+      }
+      
+      .logo-container {
+        margin-bottom: 1rem;
+      }
+      
+      .database-option {
+        padding: 1rem;
+        margin: 0.5rem 0;
+      }
+      
+      .database-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
       }
     }
     
