@@ -8,7 +8,7 @@ from config import  get_secret
 # Configure your OpenAI API key
 #
     
-BOOK_DATABASE = "./dbase/prenumerique_montreal_complet2.json"
+BOOK_DATABASE = "./dbase/prenumerique_montreal_complet2_del.json"
 OUTPUT_FILE = "./dbase/book_dbase_montreal2.json"
 TAXONOMY_FILE = "./dbase/classification_books.json"
 
@@ -174,15 +174,12 @@ def classify_books(start_index=0, end_index=None):
         if idx >= end_index:
             break
             
-        book_id = f"book_{idx}"
+        book_id = f"book_{idx+10534}"
 
         # Convert row to dictionary
         book_dict = row.to_dict()
 
-        # Prepare book data structure
-        book_data["id"] =book_id
-        book_data["label"] = row['titre']
-        book_data["type"] ="book"
+        book_data = book_dict.copy()
         
         try:
             # Classify the book using GPT
@@ -193,9 +190,12 @@ def classify_books(start_index=0, end_index=None):
                 continue
                 
             # Add classification and description to book data
+
             book_data["classification"] = json.dumps(gpt_response["classification"], ensure_ascii=False)
             book_data["description"] = gpt_response["description"]
-            
+            book_data["id"] = book_id
+            book_data["label"] = row['titre']
+            book_data["type"] = "book"            
             # Write book data as a JSON line in the output file
             with open(OUTPUT_FILE, "a", encoding="utf-8") as jf:
                 jf.write(json.dumps(book_data, ensure_ascii=False) + ",\n")
