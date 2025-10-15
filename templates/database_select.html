@@ -20,36 +20,32 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
+      align-items: flex-start;
+      padding: 5px;
       overflow-y: auto;
     }
     
     /* Allow scrolling when content is taller than viewport */
     @media screen and (max-height: 900px) {
       body {
-        align-items: flex-start;
-        padding-top: 15px;
-        padding-bottom: 15px;
+        padding: 5px;
       }
       
       .selection-card {
-        margin: 15px auto;
-        max-height: calc(100vh - 30px);
+        margin: 0 auto 10px auto;
+        max-height: calc(100vh - 10px);
       }
     }
     
     @media screen and (max-height: 700px) {
       body {
-        padding-top: 10px;
-        padding-bottom: 10px;
+        padding: 3px;
       }
       
       .selection-card {
-        margin: 10px auto;
+        margin: 0 auto 5px auto;
         padding: 2rem;
-        max-height: calc(100vh - 20px);
+        max-height: calc(100vh - 8px);
       }
     }
     
@@ -60,8 +56,8 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
       max-width: 600px;
       width: 100%;
-      margin: 20px auto;
-      max-height: calc(100vh - 40px);
+      margin: 0 auto 10px auto;
+      max-height: calc(100vh - 10px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -179,15 +175,13 @@
     /* Small screens (landscape phones, 576px and up) */
     @media (max-width: 767.98px) {
       body {
-        padding: 5px;
-        align-items: flex-start;
-        padding-top: 20px;
+        padding: 3px;
       }
       
       .selection-card {
         max-width: 100%;
         padding: 2rem;
-        margin: 20px auto;
+        margin: 0 auto 10px auto;
         border-radius: 15px;
       }
       
@@ -228,12 +222,12 @@
     /* Extra small screens (portrait phones, less than 576px) */
     @media (max-width: 575.98px) {
       body {
-        padding: 5px;
+        padding: 3px;
       }
       
       .selection-card {
         padding: 1.5rem;
-        margin: 10px auto;
+        margin: 0 auto 5px auto;
         border-radius: 12px;
       }
       
@@ -286,12 +280,11 @@
     /* Extra small screens in landscape */
     @media (max-width: 575.98px) and (orientation: landscape) {
       body {
-        align-items: center;
-        padding-top: 10px;
+        padding: 2px;
       }
       
       .selection-card {
-        margin: 5px auto;
+        margin: 0 auto 3px auto;
       }
       
       .logo {
@@ -342,14 +335,13 @@
     /* Very short screens (height less than 600px) */
     @media screen and (max-height: 600px) {
       body {
-        align-items: flex-start;
-        padding: 5px;
+        padding: 2px;
       }
       
       .selection-card {
-        margin: 5px auto;
+        margin: 0 auto 3px auto;
         padding: 1rem;
-        max-height: calc(100vh - 10px);
+        max-height: calc(100vh - 5px);
       }
       
       .logo {
