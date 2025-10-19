@@ -179,12 +179,12 @@ def generate_removal_report(removed_books, output_file):
 def main():
     """Fonction principale."""
     parser = argparse.ArgumentParser(description='Supprime les éléments dupliqués entre deux fichiers JSON')
-    parser.add_argument('--source', '-s', default='./dbase/prenumerique_montreal_complet.json', 
-                       help='Fichier JSON source (référence) (défaut: ./dbase/prenumerique_montreal_complet.json)')
-    parser.add_argument('--target', '-t', default='./dbase/prenumerique_montreal_complet2.json',
-                       help='Fichier JSON cible à filtrer (défaut: ./dbase/prenumerique_montreal_complet2.json)')
-    parser.add_argument('--output', '-o', default='./dbase/prenumerique_montreal_complet2_del.json',
-                       help='Fichier JSON de sortie (défaut: ./dbase/prenumerique_montreal_complet2_del.json)')
+    parser.add_argument('--source', '-s', default='./dbase/prenumerique_quebec_complet.json', 
+                       help='Fichier JSON source (référence) (défaut: ./dbase/prenumerique_quebec_complet.json)')
+    parser.add_argument('--target', '-t', default='./dbase/prenumerique_quebec_complet2.json',
+                       help='Fichier JSON cible à filtrer (défaut: ./dbase/prenumerique_quebec_complet2.json)')
+    parser.add_argument('--output', '-o', default='./dbase/prenumerique_quebec_complet2_del.json',
+                       help='Fichier JSON de sortie (défaut: ./dbase/prenumerique_quebec_complet2_del.json)')
     parser.add_argument('--report', '-r', default='./dbase/removal_report.json',
                        help='Fichier de rapport des suppressions (défaut: ./dbase/removal_report.json)')
     parser.add_argument('--dry-run', action='store_true',

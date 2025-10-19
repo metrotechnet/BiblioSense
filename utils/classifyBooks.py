@@ -8,8 +8,8 @@ from config import  get_secret
 # Configure your OpenAI API key
 #
     
-BOOK_DATABASE = "./dbase/prenumerique_montreal_complet2_del.json"
-OUTPUT_FILE = "./dbase/book_dbase_montreal2.json"
+BOOK_DATABASE = "./dbase/prenumerique_quebec_complet2_del.json"
+OUTPUT_FILE = "./dbase/book_dbase_quebec2.json"
 TAXONOMY_FILE = "./dbase/classification_books.json"
 
 # Configuration de base
@@ -174,7 +174,7 @@ def classify_books(start_index=0, end_index=None):
         if idx >= end_index:
             break
             
-        book_id = f"book_{idx+10534}"
+        book_id = f"book_{idx+12825}"
 
         # Convert row to dictionary
         book_dict = row.to_dict()

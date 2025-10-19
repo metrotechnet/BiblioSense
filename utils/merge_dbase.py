@@ -206,9 +206,9 @@ def main():
     print("=" * 60)
     
     # Définir les chemins (script exécuté depuis le dossier pretnumerique)
-    pretnumerique_dir = Path("pretnumerique_dbase/montreal2")  
-    output_file = "./dbase/prenumerique_montreal_complet2.json"
-    stats_file = "./dbase/prenumerique_montreal_statistiques2.json"
+    pretnumerique_dir = Path("pretnumerique_dbase/quebec2")  
+    output_file = "./dbase/prenumerique_quebec_complet2.json"
+    stats_file = "./dbase/prenumerique_quebec_statistiques2.json"
     
     # Vérifier que le dossier pretnumerique existe
     if not pretnumerique_dir.exists():
