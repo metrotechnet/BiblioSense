@@ -134,7 +134,7 @@ def init_openai_client():
         raise ValueError("OPENAI_API_KEY n'est pas définie (ni dans .env ni dans Secret Manager)")
 
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
-    print("✅ OpenAI client initialized tested")
+    print("✅ OpenAI client initialized ")
     
     # Clear GPT cache for fresh start
     if gpt_cache:
