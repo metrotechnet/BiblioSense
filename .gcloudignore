@@ -1,0 +1,63 @@
+# .gcloudignore - files to ignore when deploying to Google Cloud
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Local development
+.env
+.env.local
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Documentation
+README.md
+*.md
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any)
+node_modules/
+
+# Database files (local)
+*.db
+*.sqlite
+*.sqlite3
+
+# Large files that shouldn't be in container
+dbase/Old/
