@@ -22,7 +22,7 @@ steps:
     args: [
       'run', 'deploy', 'bibliosense',
       '--image', 'gcr.io/$PROJECT_ID/bibliosense:$BUILD_ID',
-      '--region', 'us-central1',
+      '--region', 'us-east1',
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--memory', '1Gi',
