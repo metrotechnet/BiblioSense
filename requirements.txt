@@ -13,6 +13,9 @@ waitress==3.0.0
 # Google Cloud Services
 google-cloud-secret-manager==2.20.2
 
+# Required by google-cloud dependencies
+packaging>=21.0
+
 # HTTP Requests
 requests==2.31.0
 
